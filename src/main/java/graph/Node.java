@@ -7,18 +7,16 @@ import java.util.List;
 /**
  * Created by ehallmark on 4/13/17.
  */
-public class Node<T> {
-    private List<Edge> neighborhood;
-    private String label;
-    private T data;
+public class Node {
+    protected List<Edge> neighborhood;
+    protected String label;
 
-    protected Node(String label, T data) {
-        this.data=data;
+    protected Node(String label) {
         this.label=label;
         this.neighborhood=new ArrayList<>();
     }
 
-    public Edge connect(Node<T> otherNode) {
+    public Edge connect(Node otherNode) {
         Edge edge = new Edge(this,otherNode);
         int idx = neighborhood.indexOf(edge);
         if(idx>=0) return neighborhood.get(idx);
@@ -30,7 +28,6 @@ public class Node<T> {
 
     public String getLabel() { return label; }
 
-    public T getData() { return data; }
 
     @Override
     public int hashCode() {

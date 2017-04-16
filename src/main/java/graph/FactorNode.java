@@ -1,11 +1,11 @@
-package statistics;
+package graph;
 
 import java.util.*;
 
 /**
  * Created by Evan on 4/13/2017.
  */
-public class Factor {
+public class FactorNode extends Node {
     private float[] weights;
     private int[] strides;
     private int[] cardinalities;
@@ -15,7 +15,8 @@ public class Factor {
     private String[] varLabels;
 
     // 1 dimension array
-    public Factor(float[] weights, String[] varLabels, int[] cardinalities) {
+    private FactorNode(String label, float[] weights, String[] varLabels, int[] cardinalities) {
+        super(label);
         if(varLabels.length!=cardinalities.length) throw new RuntimeException("varLabels and Cardinalities must have same size");
         this.varLabels=varLabels;
         this.cardinalities=cardinalities;
@@ -24,7 +25,7 @@ public class Factor {
         this.init();
     }
 
-    public Factor multiply(Factor other) {
+    public FactorNode multiply(FactorNode other) {
         // Get the union of X1 and X2
         String[] unionLabels = labelUnion(other);
         int unionSize = unionLabels.length;
@@ -64,7 +65,7 @@ public class Factor {
             }
         }
 
-        return new Factor(psi,unionLabels,unionCardinalities);
+        return new FactorNode(label,psi,unionLabels,unionCardinalities);
     }
 
     public void init() {
@@ -94,7 +95,7 @@ public class Factor {
     }
 
 
-    protected String[] labelUnion(Factor other) {
+    protected String[] labelUnion(FactorNode other) {
         Set<String> varUnion = new HashSet<>();
         for(String label : varLabels) varUnion.add(label);
         for(String label : other.varLabels) varUnion.add(label);
@@ -141,10 +142,10 @@ public class Factor {
         float[] phi2 = new float[] {
                 0.1f,0.25f,0f,0.3f,0f,0.1f,0.1f,0.24f,0.03f
         };
-        Factor AB = new Factor(phi1,new String[]{"A","B"},new int[]{2,3});
-        Factor BC = new Factor(phi2,new String[]{"B","C"},new int[]{3,3});
-        Factor result = AB.multiply(BC);
-        Factor result2 = BC.multiply(AB);
+        FactorNode AB = new FactorNode("FactorNode 1",phi1,new String[]{"A","B"},new int[]{2,3});
+        FactorNode BC = new FactorNode("FactorNode 2",phi2,new String[]{"B","C"},new int[]{3,3});
+        FactorNode result = AB.multiply(BC);
+        FactorNode result2 = BC.multiply(AB);
         System.out.println("AB * BC: "+ Arrays.toString(result.weights));
         System.out.println("BC * AB: "+Arrays.toString(result2.weights));
     }
