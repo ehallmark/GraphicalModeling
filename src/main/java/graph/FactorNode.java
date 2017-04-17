@@ -3,6 +3,7 @@ package graph;
 import util.FloatPair;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 /**
@@ -16,6 +17,7 @@ public class FactorNode extends Node {
     private Map<String,Integer> cardinalityMap;
     private Map<String,Integer> strideMap;
     private String[] varLabels;
+    private Map<String,Integer> varToIndexMap;
 
     // 1 dimension array
     private FactorNode(String label, float[] weights, String[] varLabels, int[] cardinalities) {
@@ -26,6 +28,45 @@ public class FactorNode extends Node {
         this.weights=weights;
         this.numVariables=cardinalities.length;
         this.init();
+    }
+
+    public FactorNode sumOut(String[] toSumOver) {
+        Collection<String> Zset = new HashSet<>();
+        Arrays.stream(toSumOver).forEach(z->{
+            Integer idx = varToIndexMap.get(z);
+            if(idx!=null) {
+                Zset.add(z);
+            }
+        });
+        List<String> Ys = new ArrayList<>(numVariables);
+        Arrays.stream(varLabels).forEach(x->{
+            if(!Zset.contains(x)) Ys.add(x);
+        });
+
+        int num = Ys.size();
+        int[] unionCardinalities = new int[num];
+        for(int i = 0; i < num; i++) {
+            unionCardinalities[i] = cardinalityMap.get(Ys.get(i));
+        }
+        int numAssignmentsTotal = numAssignmentCombinations(unionCardinalities);
+        float[] psi = new float[numAssignmentsTotal];
+        List<String> Zs = new ArrayList<>(Zset);
+        Ys.forEach(y->{
+            int yIdx = varToIndexMap.get(y);
+            Zs.forEach(z->{
+                int zIdx = varToIndexMap.get(z);
+                for(int i = 0; i < cardinalities[yIdx]; i++) {
+                    for(int j = 0; j < cardinalities[zIdx]; j++) {
+                        // compute assignment
+                        Arrays.copyOf(as)
+                        // get index from assigment
+                        int index = assignmentToIndex(assigment)
+                        // apply psi[yIdx]=psi[yIdx]+weights[assignmentToIdx(assigment)]
+                        psi[yIdx]=psi[yIdx]+weights[index];
+                    }
+                }
+            });
+        });
     }
 
     public FactorNode multiply(FactorNode other) {
@@ -42,11 +83,12 @@ public class FactorNode extends Node {
         int unionSize = unionLabels.length;
         int[] unionCardinalities = new int[unionSize];
         for(int i = 0; i < unionSize; i++) {
-            if(cardinalityMap.containsKey(unionLabels[i])) {
-                unionCardinalities[i] = cardinalityMap.get(unionLabels[i]);
+            String label = unionLabels[i];
+            if(cardinalityMap.containsKey(label)) {
+                unionCardinalities[i] = cardinalityMap.get(label);
             } else {
                 // the other one better have it!
-                unionCardinalities[i] = other.cardinalityMap.get(unionLabels[i]);
+                unionCardinalities[i] = other.cardinalityMap.get(label);
             }
         }
 
@@ -83,10 +125,16 @@ public class FactorNode extends Node {
         this.strides=computeStrides();
         this.cardinalityMap=new HashMap<>();
         this.strideMap=new HashMap<>();
+        this.varToIndexMap=new HashMap<>();
         for(int i = 0; i < numVariables; i++) {
             cardinalityMap.put(varLabels[i],cardinalities[i]);
             strideMap.put(varLabels[i],strides[i]);
+            varToIndexMap.put(varLabels[i],i);
         }
+    }
+
+    public void reNormalize(Function<float[],float[]> f) {
+        weights=f.apply(weights);
     }
 
     public int strideFor(String varLabel) {
