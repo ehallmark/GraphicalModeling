@@ -1,6 +1,9 @@
 package graph;
 
+import util.FloatPair;
+
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Created by Evan on 4/13/2017.
@@ -26,6 +29,14 @@ public class FactorNode extends Node {
     }
 
     public FactorNode multiply(FactorNode other) {
+        return applyFunction(other,(pair->pair._1*pair._2));
+    }
+
+    public FactorNode divideBy(FactorNode other) {
+        return applyFunction(other,(pair->pair._2==0?0:pair._1/pair._2));
+    }
+
+    public FactorNode applyFunction(FactorNode other, Function<FloatPair,Float> f) {
         // Get the union of X1 and X2
         String[] unionLabels = labelUnion(other);
         int unionSize = unionLabels.length;
@@ -50,7 +61,7 @@ public class FactorNode extends Node {
         int numAssignmentsTotal = numAssignmentCombinations(unionCardinalities);
         float[] psi = new float[numAssignmentsTotal];
         for( int i = 0; i < numAssignmentsTotal-1; i++) {
-            psi[i] = weights[j] *  other.weights[k];
+            psi[i] = f.apply(new FloatPair(weights[j],other.weights[k]));
             for(int l = 0; l < unionSize; l++) {
                 assignments[l]++;
                 if(assignments[l]==unionCardinalities[l]) {
