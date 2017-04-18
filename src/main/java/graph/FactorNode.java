@@ -19,6 +19,7 @@ public class FactorNode extends Node {
     private Map<String,Integer> strideMap;
     private String[] varLabels;
     private Map<String,Integer> varToIndexMap;
+    private int numAssignments;
 
     // 1 dimension array // if null then unnamed
     private FactorNode(String label, float[] weights, String[] varLabels, int[] cardinalities) {
@@ -145,11 +146,14 @@ public class FactorNode extends Node {
         this.cardinalityMap=new HashMap<>();
         this.strideMap=new HashMap<>();
         this.varToIndexMap=new HashMap<>();
+        this.numAssignments=1;
         for(int i = 0; i < numVariables; i++) {
             cardinalityMap.put(varLabels[i],cardinalities[i]);
             strideMap.put(varLabels[i],strides[i]);
             varToIndexMap.put(varLabels[i],i);
+            numAssignments*=cardinalities[i];
         }
+        if(numAssignments!=weights.length) throw new RuntimeException("Invalid factor dimensions");
     }
 
     public void reNormalize(Function<float[],float[]> f) {
@@ -249,5 +253,8 @@ public class FactorNode extends Node {
         num = 6;
         if(result2.weights.length==num) System.out.println("PASSED");
         else System.out.println("FAILED: "+result2.weights.length+" should be "+num);
+
+        FactorNode X = new FactorNode("Test",new float[]{1f,2f,3f,5f,7f,11f},new String[]{"A","B"}, new int[]{2,3});
+        System.out.println("X: "+Arrays.toString(X.sumOut(new String[]{"A"}).weights));
     }
 }
