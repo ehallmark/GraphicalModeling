@@ -11,25 +11,33 @@ import java.util.stream.Stream;
  * Created by Evan on 4/13/2017.
  */
 public class FactorNode extends Node {
-    private float[] weights;
-    private int[] strides;
-    private int[] cardinalities;
-    private int numVariables;
-    private Map<String,Integer> cardinalityMap;
-    private Map<String,Integer> strideMap;
-    private String[] varLabels;
-    private Map<String,Integer> varToIndexMap;
-    private int numAssignments;
+    protected float[] weights;
+    protected int[] strides;
+    protected int[] cardinalities;
+    protected int numVariables;
+    protected Map<String,Integer> cardinalityMap;
+    protected Map<String,Integer> strideMap;
+    protected String[] varLabels;
+    protected Map<String,Integer> varToIndexMap;
+    protected int numAssignments;
 
     // 1 dimension array // if null then unnamed
-    private FactorNode(String label, float[] weights, String[] varLabels, int[] cardinalities) {
-        super(label);
+    protected FactorNode(float[] weights, String[] varLabels, int[] cardinalities) {
+        super(null,0);
         if(varLabels.length!=cardinalities.length) throw new RuntimeException("varLabels and Cardinalities must have same size");
         this.varLabels=varLabels;
         this.cardinalities=cardinalities;
         this.weights=weights;
         this.numVariables=cardinalities.length;
         this.init();
+    }
+
+    public int cardinalityFor(String varName) {
+        Integer c = cardinalityMap.get(varName);
+
+        if(c==null || c < 0) return 0;
+
+        return c;
     }
 
     public FactorNode sumOut(String[] toSumOver) {
@@ -73,7 +81,7 @@ public class FactorNode extends Node {
             int newIdx = assignmentToIndex(assignmentsToKeep,newStrides,newLabels.length);
             psi[newIdx]=psi[newIdx]+weights[oldIdx];
         });
-        return new FactorNode(null,psi,newLabels,newCardinalities);
+        return new FactorNode(psi,newLabels,newCardinalities);
     }
 
     // returns all possible assignments with given cardinality array
@@ -138,7 +146,7 @@ public class FactorNode extends Node {
                 }
             }
         }
-        return new FactorNode(null,psi,unionLabels,unionCardinalities);
+        return new FactorNode(psi,unionLabels,unionCardinalities);
     }
 
     public void init() {
@@ -222,39 +230,5 @@ public class FactorNode extends Node {
             }
         }
         return strides;
-    }
-
-    public static void main(String[] args) throws Exception {
-        // TEST
-        float[] phi1 = new float[] {
-                0.2f,0.25f,0f,0.3f,0.1f,0.15f
-        };
-        float[] phi2 = new float[] {
-                0.1f,0.25f,0f,0.3f,0f,0.1f,0.1f,0.24f,0.03f
-        };
-        FactorNode AB = new FactorNode("FactorNode 1",phi1,new String[]{"A","B"},new int[]{2,3});
-        FactorNode BC = new FactorNode("FactorNode 2",phi2,new String[]{"B","C"},new int[]{3,3});
-        FactorNode result = AB.multiply(BC);
-        FactorNode result2 = BC.multiply(AB);
-        if(Arrays.equals(result.weights,result2.weights)) {
-            System.out.println("PASSED");
-        } else {
-            System.out.println("FAILED: AB*BC should equal BC*AB");
-        }
-        int num = 18;
-        if(result.weights.length==num) System.out.println("PASSED");
-        else System.out.println("FAILED: "+result.weights.length+" should be "+num);
-
-        result2 = result.sumOut(new String[]{"A"});
-        num = 9;
-        if(result2.weights.length==num) System.out.println("PASSED");
-        else System.out.println("FAILED: "+result2.weights.length+" should be "+num);
-        result2 = result.sumOut(new String[]{"B"});
-        num = 6;
-        if(result2.weights.length==num) System.out.println("PASSED");
-        else System.out.println("FAILED: "+result2.weights.length+" should be "+num);
-
-        FactorNode X = new FactorNode("Test",new float[]{1f,2f,3f,5f,7f,11f},new String[]{"A","B"}, new int[]{2,3});
-        System.out.println("X: "+Arrays.toString(X.sumOut(new String[]{"A"}).weights));
     }
 }

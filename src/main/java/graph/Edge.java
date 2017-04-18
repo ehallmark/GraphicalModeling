@@ -1,5 +1,7 @@
 package graph;
 
+import java.util.Objects;
+
 /**
  * Created by ehallmark on 4/13/17.
  */
@@ -15,7 +17,7 @@ public class Edge {
     public Node getNode1() {return node1; }
     public Node getNode2() { return node2;}
 
-
+    // Checks whether connects the same pair of nodes
     @Override
     public boolean equals(Object other) {
         if(!(other instanceof Edge)) {
@@ -26,14 +28,20 @@ public class Edge {
 
         Node otherNode1 = otherEdge.getNode1();
         Node otherNode2 = otherEdge.getNode2();
-        if(node1.getLabel().equals(otherNode1.getLabel())&&node2.getLabel().equals(otherNode2.getLabel())) {
+
+        if(node1.equals(otherNode1)&&node2.equals(otherNode2)) {
             return true;
         }
 
-        if(node2.getLabel().equals(otherNode1.getLabel())&&node1.getLabel().equals(otherNode2.getLabel())) {
+        if(node2.equals(otherNode1)&&node1.equals(otherNode2)) {
             return true;
         }
 
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(node1,node2);
     }
 }
