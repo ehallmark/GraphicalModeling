@@ -5,6 +5,7 @@ import util.FloatPair;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * Created by Evan on 4/13/2017.
@@ -50,6 +51,7 @@ public class FactorNode extends Node {
             newCardinalities[i] = cardinalityMap.get(Ys.get(i));
         }
         int numAssignmentsTotal = numAssignmentCombinations(newCardinalities);
+        int[] newStrides = computeStrides(newCardinalities,newLabels.length);
         float[] psi = new float[numAssignmentsTotal];
         List<String> Zs = new ArrayList<>(Zset);
         Set<Integer> indicesToSumOver = new HashSet<>();
@@ -57,7 +59,7 @@ public class FactorNode extends Node {
             String z = Zs.get(i);
             indicesToSumOver.add(varToIndexMap.get(z));
         }
-        cardinalityPermutations(cardinalities).forEach(permutation->{
+        this.assignmentPermutationsStream().forEach(permutation->{
             int[] assignmentsToKeep = new int[newCardinalities.length];
             int j = 0;
             for(int i = 0; i < cardinalities.length; i++) {
@@ -67,15 +69,23 @@ public class FactorNode extends Node {
                 }
             }
             int oldIdx = assignmentToIndex(permutation);
-            int newIdx = assignmentToIndex(assignmentsToKeep);
+            int newIdx = assignmentToIndex(assignmentsToKeep,newStrides,newLabels.length);
             psi[newIdx]=psi[newIdx]+weights[oldIdx];
         });
         return new FactorNode(null,psi,newLabels,newCardinalities);
     }
 
     // returns all possible assignments with given cardinality array
-    public static List<int[]> cardinalityPermutations(int[] cardinalities) {
-        
+    public Stream<int[]> assignmentPermutationsStream() {
+        int numAssignments=numAssignmentCombinations(cardinalities);
+        List<Integer> indices = new ArrayList<>(numAssignments); for(int i = 0; i < numAssignments; i++) indices.add(i);
+        return indices.stream().map(idx->{
+            int[] assignment = new int[cardinalities.length];
+            for(int i = 0; i < cardinalities.length; i++) {
+                assignment[i]=indexToAssignment(varLabels[i],idx);
+            }
+            return assignment;
+        });
     }
 
 
@@ -172,6 +182,10 @@ public class FactorNode extends Node {
     }
 
     public int assignmentToIndex(int[] assignments) {
+        return assignmentToIndex(assignments,strides,numVariables);
+    }
+
+    public static int assignmentToIndex(int[] assignments, int[] strides, int numVariables) {
         if(assignments.length!=strides.length) throw new RuntimeException("Invalid number of assignments. Should have size: "+strides.length);
         int index = 0;
         for(int i = 0; i < numVariables; i++) {
@@ -188,6 +202,10 @@ public class FactorNode extends Node {
     }
 
     public int[] computeStrides() {
+        return computeStrides(cardinalities,numVariables);
+    }
+
+    public static int[] computeStrides(int[] cardinalities, int numVariables) {
         int strides[] = new int[numVariables];
         int stride = 1;
         for(int i = 0; i < numVariables; i++) {
@@ -214,6 +232,8 @@ public class FactorNode extends Node {
         FactorNode BC = new FactorNode("FactorNode 2",phi2,new String[]{"B","C"},new int[]{3,3});
         FactorNode result = AB.multiply(BC);
         FactorNode result2 = BC.multiply(AB);
+        result = result.sumOut(new String[]{"A"});
+        result2 = result.sumOut(new String[]{"B"});
         System.out.println("AB * BC: "+ Arrays.toString(result.weights));
         System.out.println("BC * AB: "+Arrays.toString(result2.weights));
     }
