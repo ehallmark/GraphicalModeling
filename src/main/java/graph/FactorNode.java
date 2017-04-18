@@ -232,9 +232,22 @@ public class FactorNode extends Node {
         FactorNode BC = new FactorNode("FactorNode 2",phi2,new String[]{"B","C"},new int[]{3,3});
         FactorNode result = AB.multiply(BC);
         FactorNode result2 = BC.multiply(AB);
-        result = result.sumOut(new String[]{"A"});
+        if(Arrays.equals(result.weights,result2.weights)) {
+            System.out.println("PASSED");
+        } else {
+            System.out.println("FAILED: AB*BC should equal BC*AB");
+        }
+        int num = 18;
+        if(result.weights.length==num) System.out.println("PASSED");
+        else System.out.println("FAILED: "+result.weights.length+" should be "+num);
+
+        result2 = result.sumOut(new String[]{"A"});
+        num = 9;
+        if(result2.weights.length==num) System.out.println("PASSED");
+        else System.out.println("FAILED: "+result2.weights.length+" should be "+num);
         result2 = result.sumOut(new String[]{"B"});
-        System.out.println("AB * BC: "+ Arrays.toString(result.weights));
-        System.out.println("BC * AB: "+Arrays.toString(result2.weights));
+        num = 6;
+        if(result2.weights.length==num) System.out.println("PASSED");
+        else System.out.println("FAILED: "+result2.weights.length+" should be "+num);
     }
 }
