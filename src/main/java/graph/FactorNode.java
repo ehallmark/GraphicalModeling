@@ -90,14 +90,14 @@ public class FactorNode extends Node {
 
 
     public FactorNode multiply(FactorNode other) {
-        return applyFunction(other,(pair->pair._1*pair._2),"<mul>");
+        return applyFunction(other,(pair->pair._1*pair._2));
     }
 
     public FactorNode divideBy(FactorNode other) {
-        return applyFunction(other,(pair->pair._2==0?0:pair._1/pair._2),"<div>");
+        return applyFunction(other,(pair->pair._2==0?0:pair._1/pair._2));
     }
 
-    public FactorNode applyFunction(FactorNode other, Function<FloatPair,Float> f, String functionName) {
+    public FactorNode applyFunction(FactorNode other, Function<FloatPair,Float> f) {
         // Get the union of X1 and X2
         String[] unionLabels = labelUnion(other);
         int unionSize = unionLabels.length;
