@@ -19,7 +19,7 @@ public class FactorNode extends Node {
     private String[] varLabels;
     private Map<String,Integer> varToIndexMap;
 
-    // 1 dimension array
+    // 1 dimension array // if null then unnamed
     private FactorNode(String label, float[] weights, String[] varLabels, int[] cardinalities) {
         super(label);
         if(varLabels.length!=cardinalities.length) throw new RuntimeException("varLabels and Cardinalities must have same size");
@@ -39,45 +39,55 @@ public class FactorNode extends Node {
             }
         });
         List<String> Ys = new ArrayList<>(numVariables);
-        Arrays.stream(varLabels).forEach(x->{
+        for(String x : varLabels) {
             if(!Zset.contains(x)) Ys.add(x);
-        });
+        }
 
         int num = Ys.size();
-        int[] unionCardinalities = new int[num];
+        int[] newCardinalities = new int[num];
+        String[] newLabels = Ys.toArray(new String[num]);
         for(int i = 0; i < num; i++) {
-            unionCardinalities[i] = cardinalityMap.get(Ys.get(i));
+            newCardinalities[i] = cardinalityMap.get(Ys.get(i));
         }
-        int numAssignmentsTotal = numAssignmentCombinations(unionCardinalities);
+        int numAssignmentsTotal = numAssignmentCombinations(newCardinalities);
         float[] psi = new float[numAssignmentsTotal];
         List<String> Zs = new ArrayList<>(Zset);
-        Ys.forEach(y->{
-            int yIdx = varToIndexMap.get(y);
-            Zs.forEach(z->{
-                int zIdx = varToIndexMap.get(z);
-                for(int i = 0; i < cardinalities[yIdx]; i++) {
-                    for(int j = 0; j < cardinalities[zIdx]; j++) {
-                        // compute assignment
-                        Arrays.copyOf(as)
-                        // get index from assigment
-                        int index = assignmentToIndex(assigment)
-                        // apply psi[yIdx]=psi[yIdx]+weights[assignmentToIdx(assigment)]
-                        psi[yIdx]=psi[yIdx]+weights[index];
-                    }
+        Set<Integer> indicesToSumOver = new HashSet<>();
+        for(int i = 0; i < Zs.size(); i++) {
+            String z = Zs.get(i);
+            indicesToSumOver.add(varToIndexMap.get(z));
+        }
+        cardinalityPermutations(cardinalities).forEach(permutation->{
+            int[] assignmentsToKeep = new int[newCardinalities.length];
+            int j = 0;
+            for(int i = 0; i < cardinalities.length; i++) {
+                if(!indicesToSumOver.contains(i)) {
+                    assignmentsToKeep[j]=permutation[i];
+                    j++;
                 }
-            });
+            }
+            int oldIdx = assignmentToIndex(permutation);
+            int newIdx = assignmentToIndex(assignmentsToKeep);
+            psi[newIdx]=psi[newIdx]+weights[oldIdx];
         });
+        return new FactorNode(null,psi,newLabels,newCardinalities);
     }
 
+    // returns all possible assignments with given cardinality array
+    public static List<int[]> cardinalityPermutations(int[] cardinalities) {
+        
+    }
+
+
     public FactorNode multiply(FactorNode other) {
-        return applyFunction(other,(pair->pair._1*pair._2));
+        return applyFunction(other,(pair->pair._1*pair._2),"<mul>");
     }
 
     public FactorNode divideBy(FactorNode other) {
-        return applyFunction(other,(pair->pair._2==0?0:pair._1/pair._2));
+        return applyFunction(other,(pair->pair._2==0?0:pair._1/pair._2),"<div>");
     }
 
-    public FactorNode applyFunction(FactorNode other, Function<FloatPair,Float> f) {
+    public FactorNode applyFunction(FactorNode other, Function<FloatPair,Float> f, String functionName) {
         // Get the union of X1 and X2
         String[] unionLabels = labelUnion(other);
         int unionSize = unionLabels.length;
@@ -117,8 +127,7 @@ public class FactorNode extends Node {
                 }
             }
         }
-
-        return new FactorNode(label,psi,unionLabels,unionCardinalities);
+        return new FactorNode(null,psi,unionLabels,unionCardinalities);
     }
 
     public void init() {

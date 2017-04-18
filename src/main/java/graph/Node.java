@@ -31,7 +31,7 @@ public class Node {
 
     @Override
     public int hashCode() {
-        return label.hashCode();
+        return (label==null)? super.hashCode():label.hashCode();
     }
 
     @Override
