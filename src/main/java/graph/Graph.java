@@ -16,6 +16,14 @@ public class Graph {
         this.factorNodes=new HashSet<>();
     }
 
+    public Node addNode(String label) { // default binary
+        return this.addNode(label,2);
+    }
+
+    public Node findNode(String label) {
+        return labelToNodeMap.get(label);
+    }
+
     public Node addNode(String label, int cardinality) {
         if(labelToNodeMap.containsKey(label)) throw new RuntimeException("Label already exists");
         Node node = new Node(label,cardinality);
@@ -36,8 +44,8 @@ public class Graph {
         }
         FactorNode factor = new FactorNode(weights,connectingLabels,varCardinalities);
         Arrays.stream(nodes).forEach(node->{
-            node.connect(factor);
-            factor.connect(node);
+            node.connectFactor(factor);
+            factor.connectNode(node);
         });
         factorNodes.add(factor);
         return factor;
@@ -49,8 +57,8 @@ public class Graph {
 
     public Edge connectNodes(Node node1, Node node2) {
         if(node1==null||node2==null) return null;
-        Edge edge = node1.connect(node2);
-        node2.connect(node1);
+        Edge edge = node1.connectNode(node2);
+        node2.connectNode(node1);
         return edge;
     }
 }

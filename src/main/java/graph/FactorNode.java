@@ -11,7 +11,6 @@ import java.util.stream.Stream;
  * Created by Evan on 4/13/2017.
  */
 public class FactorNode extends Node {
-    protected float[] weights;
     protected int[] strides;
     protected int[] cardinalities;
     protected int numVariables;

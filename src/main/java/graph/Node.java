@@ -1,6 +1,9 @@
 package graph;
 
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,40 +13,51 @@ import java.util.Map;
  * Created by ehallmark on 4/13/17.
  */
 public class Node {
-    protected final List<Edge> neighborhood;
-    protected final List<Edge> factors;
+    @Getter
+    protected final List<Node> neighbors;
+    @Getter
+    protected final List<FactorNode> factors;
+    @Getter
     protected final String label;
     protected final int cardinality;
+    @Getter @Setter
+    protected float[] weights;
     protected final Map<Edge,Integer> edgeIndexMap;
     protected final Map<Edge,Integer> factorEdgeIndexMap;
 
     protected Node(String label, int cardinality) {
         this.label=label;
-        this.neighborhood=new ArrayList<>();
+        this.neighbors=new ArrayList<>();
         this.cardinality=cardinality;
         this.edgeIndexMap=new HashMap<>();
         this.factors=new ArrayList<>();
         this.factorEdgeIndexMap = new HashMap<>();
     }
 
-    public Edge connect(Node otherNode) {
-        Map<Edge,Integer> indexMap;
-        List<Edge> connections;
-        if(otherNode instanceof FactorNode) {
-            if(this instanceof FactorNode)throw new RuntimeException("Cannot directly connect to factor nodes.");
-            indexMap=factorEdgeIndexMap;
-            connections=factors;
-        } else {
-            indexMap=edgeIndexMap;
-            connections=neighborhood;
-        }
+
+    public Edge connectNode(Node otherNode) {
         Edge edge = new Edge(this, otherNode);
-        if (indexMap.containsKey(edge)) {
+        if (edgeIndexMap.containsKey(edge)) {
             return edge;
         } else {
-            synchronized (connections) {
-                indexMap.put(edge, connections.size());
-                connections.add(edge);
+            synchronized (neighbors) {
+                edgeIndexMap.put(edge, neighbors.size());
+                neighbors.add(otherNode);
+
+            }
+            return edge;
+        }
+    }
+
+    public Edge connectFactor(FactorNode otherFactor) {
+        Edge edge = new Edge(this, otherFactor);
+        if (factorEdgeIndexMap.containsKey(edge)) {
+            return edge;
+        } else {
+            synchronized (neighbors) {
+                factorEdgeIndexMap.put(edge, factors.size());
+                factors.add(otherFactor);
+
             }
             return edge;
         }
