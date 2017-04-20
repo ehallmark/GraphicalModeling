@@ -2,6 +2,9 @@ package page_rank;
 
 import graph.Graph;
 import graph.Node;
+import lombok.Setter;
+import util.FloatPair;
+import util.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -10,10 +13,10 @@ import java.util.stream.Collectors;
  * Created by ehallmark on 4/20/17.
  */
 public class PageRank {
-    private Map<String,? extends Collection<String>> labelToCitationLabelsMap;
-    private Graph graph;
-    private Set<Node> nodes;
-    private double damping;
+    protected Map<String,? extends Collection<String>> labelToCitationLabelsMap;
+    protected Graph graph;
+    protected Set<Node> nodes;
+    protected double damping;
     public PageRank(Map<String,? extends Collection<String>> labelToCitationLabelsMap, double damping) {
         if(damping<0||damping>1) throw new RuntimeException("Illegal damping constant");
         this.labelToCitationLabelsMap=labelToCitationLabelsMap;
@@ -37,33 +40,33 @@ public class PageRank {
 
     public void resetWeights() {
         nodes.forEach(node->{
-            node.setWeights(new float[]{0f});
+            node.setWeights(new float[]{1f/nodes.size()});
         });
     }
 
-    public List<String> findSimilarDocuments(String nodeLabel, int topN, int numEpochs, int breadthOfSearch) {
+    public List<Pair<String,Float>> findSimilarDocuments(Collection<String> nodeLabel, int topN, int numEpochs, int depthOfSearch) {
         resetWeights();
 
-        Node node = graph.findNode(nodeLabel);
+        List<Node> nodeList = nodeLabel.stream().map(label->graph.findNode(label)).filter(n->n!=null).collect(Collectors.toList());
+        if(nodeList.isEmpty()) return Collections.emptyList();
 
-        if(node==null) return Collections.emptyList();
         for(int epoch = 0; epoch < numEpochs; epoch++) {
             System.out.println("Starting epoch ["+(epoch+1)+"]");
-            findSimilarDocumentsHelper(node,0,breadthOfSearch);
+            nodeList.forEach(node->findSimilarDocumentsHelper(node,0,depthOfSearch));
         }
 
         // collect results
-        return nodes.stream().sorted((n1,n2)->Float.compare(n2.getWeights()[0],n1.getWeights()[0])).map(n->n.getLabel()).limit(topN).collect(Collectors.toList());
+        return nodes.stream().sorted((n1,n2)->Float.compare(n2.getWeights()[0],n1.getWeights()[0])).map(n->new Pair<String,Float>(n.getLabel(),n.getWeights()[0])).limit(topN).collect(Collectors.toList());
     }
 
-    private void findSimilarDocumentsHelper(Node node, final int currentBreadth,final int maxBreadth) {
-        if(currentBreadth>maxBreadth) return;
+    private void findSimilarDocumentsHelper(Node node, final int currentDepth,final int maxDepth) {
+        if(currentDepth>maxDepth) return;
         runPageRankOnSingleNode(node);
-        node.getNeighbors().forEach(neighbor->findSimilarDocumentsHelper(neighbor,currentBreadth+1,maxBreadth));
+        node.getNeighbors().forEach(neighbor->findSimilarDocumentsHelper(neighbor,currentDepth+1,maxDepth));
     }
 
     private void runPageRankOnSingleNode(Node node) {
-        double weight = (1d-damping) + (damping * node.getNeighbors().stream().collect(Collectors.summingDouble(neighbor->(double)(neighbor.getWeights()[0]))));
+        double weight = (1d-damping)/nodes.size() + (damping * node.getNeighbors().stream().collect(Collectors.summingDouble(neighbor->(double)(neighbor.getWeights()[0]/neighbor.getNeighbors().size()))));
         node.setWeights(new float[]{(float)weight});
     }
 
@@ -75,6 +78,6 @@ public class PageRank {
         test.put("n4",Arrays.asList("n1","n2"));
         double damping = 0.85;
         PageRank pr = new PageRank(test,damping);
-        System.out.println("Similar to n4: "+String.join("; ",pr.findSimilarDocuments("n4",3,4,2)));
+        //System.out.println("Similar to n4: "+String.join("; ",pr.findSimilarDocuments(Arrays.asList("n4"),3,4,2)));
     }
 }
