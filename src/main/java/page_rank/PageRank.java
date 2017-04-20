@@ -60,14 +60,14 @@ public class PageRank {
     }
 
     private void findSimilarDocumentsHelper(Node node, final int currentDepth,final int maxDepth) {
-        if(currentDepth>maxDepth) return;
-        runPageRankOnSingleNode(node);
-        node.getNeighbors().forEach(neighbor->findSimilarDocumentsHelper(neighbor,currentDepth+1,maxDepth));
+        double distanceDiscount = Math.pow(0.5,currentDepth);
+        runPageRankOnSingleNode(node,distanceDiscount);
+        if(currentDepth<maxDepth) node.getNeighbors().forEach(neighbor->findSimilarDocumentsHelper(neighbor,currentDepth+1,maxDepth));
     }
 
-    private void runPageRankOnSingleNode(Node node) {
-        double weight = (1d-damping)/nodes.size() + (damping * node.getNeighbors().stream().collect(Collectors.summingDouble(neighbor->(double)(neighbor.getWeights()[0]/neighbor.getNeighbors().size()))));
-        node.setWeights(new float[]{(float)weight});
+    private void runPageRankOnSingleNode(Node node, double distanceDiscount) {
+        double pr = (1d-damping)/nodes.size() + (damping * node.getNeighbors().stream().collect(Collectors.summingDouble(neighbor->(double)(neighbor.getWeights()[0]/neighbor.getNeighbors().size()))));
+        node.setWeights(new float[]{(float)(pr*distanceDiscount)});
     }
 
     public static void main(String[] args) throws Exception {
