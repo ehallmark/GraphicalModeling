@@ -1,9 +1,7 @@
-package page_rank;
+package rank;
 
 import graph.Graph;
 import graph.Node;
-import lombok.Setter;
-import util.FloatPair;
 import util.Pair;
 
 import java.util.*;
@@ -15,13 +13,13 @@ import java.util.stream.Collectors;
 /**
  * Created by ehallmark on 4/20/17.
  */
-public class PageRank {
+public class SimRank extends RankGraph<SimRank> {
     protected Map<String,? extends Collection<String>> labelToCitationLabelsMap;
     protected Graph graph;
     protected Set<Node> nodes;
     protected double damping;
     protected int parallelism;
-    public PageRank(Map<String,? extends Collection<String>> labelToCitationLabelsMap, double damping, int parallelism) {
+    public SimRank(Map<String,? extends Collection<String>> labelToCitationLabelsMap, double damping, int parallelism) {
         if(damping<0||damping>1) throw new RuntimeException("Illegal damping constant");
         this.labelToCitationLabelsMap=labelToCitationLabelsMap;
         this.graph=new Graph();
@@ -43,14 +41,20 @@ public class PageRank {
         if(nodes.size()!=labelToCitationLabelsMap.size()) throw new RuntimeException("Error constructing graph!");
     }
 
-    public void resetWeights() {
+    @Override
+    public void solve() {
+        init();
+        
+    }
+
+    public void resetWeights(Collection<String> actuals) {
         nodes.forEach(node->{
-            node.setWeights(new float[]{1f/nodes.size()});
+            node.setWeights(new float[]{actuals.contains(node.getLabel())?1f:0f});
         });
     }
 
     public List<Pair<String,Float>> findSimilarDocuments(Collection<String> nodeLabels, int topN, int numEpochs, int depthOfSearch, long timeoutSeconds) {
-        resetWeights();
+        resetWeights(nodeLabels);
 
         List<Node> nodeList = nodeLabels.stream().map(label->graph.findNode(label)).filter(n->n!=null).collect(Collectors.toList());
         if(nodeList.isEmpty()) return Collections.emptyList();
@@ -78,19 +82,23 @@ public class PageRank {
         return nodes.stream().filter(n->n.getWeights()[0]>1f/nodes.size()).sorted((n1,n2)->Float.compare(n2.getWeights()[0],n1.getWeights()[0])).limit(topN).map(n->new Pair<>(n.getLabel(),n.getWeights()[0])).collect(Collectors.toList());
     }
 
-    private void findSimilarDocumentsHelper(Node node, final int currentDepth,final int maxDepth, ForkJoinPool pool) {
-        double distanceDiscount = Math.pow(0.5,currentDepth);
-        runPageRankOnSingleNode(node,distanceDiscount);
+    private void findSimilarDocumentsHelper(Node node, final Node targetNode, final int currentDepth,final int maxDepth, ForkJoinPool pool) {
+        runSimRankOnSingleNode(node,targetNode);
         if(currentDepth<maxDepth) node.getNeighbors().forEach(neighbor->pool.execute(new RecursiveAction() {
             @Override
             protected void compute() {
-                findSimilarDocumentsHelper(neighbor,currentDepth+1,maxDepth,pool);
+                findSimilarDocumentsHelper(neighbor,targetNode,currentDepth+1,maxDepth,pool);
             }
         }));
     }
 
-    private void runPageRankOnSingleNode(Node node, double distanceDiscount) {
-        double pr = (1d-damping)/nodes.size() + (damping * node.getNeighbors().stream().collect(Collectors.summingDouble(neighbor->(double)(neighbor.getWeights()[0]/neighbor.getNeighbors().size()))));
+    private void runSimRankOnSingleNode(Node node, Set<Node> targetNodes) {
+        if(targetNodes.contains(node)) return;
+
+
+        double pr = (damping / (node.getNeighbors().size()*targetNode.getNeighbors().size())) *
+                node.getNeighbors().stream().collect(Collectors
+                        .summingDouble(n1->targetNode.getNeighbors().stream().collect(Collectors.summingDouble(n2->)));
         node.setWeights(new float[]{(float)(pr*distanceDiscount)});
     }
 
@@ -100,9 +108,9 @@ public class PageRank {
         test.put("n2",Arrays.asList("n1"));
         test.put("n3",Collections.emptyList());
         test.put("n4",Arrays.asList("n1","n2"));
-        double damping = 0.85;
+        double damping = 0.75;
         int parallelism = 4;
-        PageRank pr = new PageRank(test,damping,parallelism);
+        SimRank pr = new SimRank(test,damping,parallelism);
         //System.out.println("Similar to n4: "+String.join("; ",pr.findSimilarDocuments(Arrays.asList("n4"),3,4,2)));
     }
 }
