@@ -14,37 +14,14 @@ import java.util.stream.Collectors;
  * Created by ehallmark on 4/20/17.
  */
 public class SimRank extends RankGraph<SimRank> {
-    protected Map<String,? extends Collection<String>> labelToCitationLabelsMap;
-    protected Graph graph;
-    protected Set<Node> nodes;
-    protected double damping;
-    protected int parallelism;
-    public SimRank(Map<String,? extends Collection<String>> labelToCitationLabelsMap, double damping, int parallelism) {
-        if(damping<0||damping>1) throw new RuntimeException("Illegal damping constant");
-        this.labelToCitationLabelsMap=labelToCitationLabelsMap;
-        this.graph=new Graph();
-        this.parallelism=parallelism;
-        this.damping=damping;
-        this.nodes = new HashSet<>(labelToCitationLabelsMap.size());
-        this.init();
-    }
 
-    public void init() {
-        labelToCitationLabelsMap.keySet().forEach(label->{
-            nodes.add(graph.addNode(label));
-        });
-        labelToCitationLabelsMap.forEach((label,citations)->{
-            citations.forEach(citation->{
-                graph.connectNodes(label, citation);
-            });
-        });
-        if(nodes.size()!=labelToCitationLabelsMap.size()) throw new RuntimeException("Error constructing graph!");
+    public SimRank(
     }
 
     @Override
     public void solve() {
         init();
-        
+
     }
 
     public void resetWeights(Collection<String> actuals) {
