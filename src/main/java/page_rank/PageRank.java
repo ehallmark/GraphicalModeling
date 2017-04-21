@@ -8,6 +8,7 @@ import util.Pair;
 
 import java.util.*;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
 import java.util.stream.Collectors;
 
 /**
@@ -47,26 +48,37 @@ public class PageRank {
         });
     }
 
-    public List<Pair<String,Float>> findSimilarDocuments(Collection<String> nodeLabel, int topN, int numEpochs, int depthOfSearch) {
+    public List<Pair<String,Float>> findSimilarDocuments(Collection<String> nodeLabels, int topN, int numEpochs, int depthOfSearch) {
         resetWeights();
 
-        List<Node> nodeList = nodeLabel.stream().map(label->graph.findNode(label)).filter(n->n!=null).collect(Collectors.toList());
+        List<Node> nodeList = nodeLabels.stream().map(label->graph.findNode(label)).filter(n->n!=null).collect(Collectors.toList());
         if(nodeList.isEmpty()) return Collections.emptyList();
 
         ForkJoinPool pool = new ForkJoinPool(Math.max(1,parallelism));
         for(int epoch = 0; epoch < numEpochs; epoch++) {
             System.out.println("Starting epoch ["+(epoch+1)+"]");
-            nodeList.forEach(node->pool.findSimilarDocumentsHelper(node,0,depthOfSearch));
+            nodeList.forEach(node->pool.execute(new RecursiveAction() {
+                @Override
+                protected void compute() {
+                    findSimilarDocumentsHelper(node,0,depthOfSearch,pool);
+                }
+            }));
         }
 
+
         // collect results
-        return nodes.stream().sorted((n1,n2)->Float.compare(n2.getWeights()[0],n1.getWeights()[0])).limit(topN).map(n->new Pair<>(n.getLabel(),n.getWeights()[0])).collect(Collectors.toList());
+        return nodes.stream().filter(n->n.getWeights()[0]>1f/nodes.size()).sorted((n1,n2)->Float.compare(n2.getWeights()[0],n1.getWeights()[0])).limit(topN).map(n->new Pair<>(n.getLabel(),n.getWeights()[0])).collect(Collectors.toList());
     }
 
-    private void findSimilarDocumentsHelper(Node node, final int currentDepth,final int maxDepth) {
+    private void findSimilarDocumentsHelper(Node node, final int currentDepth,final int maxDepth, ForkJoinPool pool) {
         double distanceDiscount = Math.pow(0.5,currentDepth);
         runPageRankOnSingleNode(node,distanceDiscount);
-        if(currentDepth<maxDepth) node.getNeighbors().forEach(neighbor->findSimilarDocumentsHelper(neighbor,currentDepth+1,maxDepth));
+        if(currentDepth<maxDepth) node.getNeighbors().forEach(neighbor->pool.execute(new RecursiveAction() {
+            @Override
+            protected void compute() {
+                findSimilarDocumentsHelper(neighbor,currentDepth+1,maxDepth,pool);
+            }
+        }));
     }
 
     private void runPageRankOnSingleNode(Node node, double distanceDiscount) {
