@@ -9,6 +9,7 @@ import util.Pair;
 import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -48,7 +49,7 @@ public class PageRank {
         });
     }
 
-    public List<Pair<String,Float>> findSimilarDocuments(Collection<String> nodeLabels, int topN, int numEpochs, int depthOfSearch) {
+    public List<Pair<String,Float>> findSimilarDocuments(Collection<String> nodeLabels, int topN, int numEpochs, int depthOfSearch, long timeoutSeconds) {
         resetWeights();
 
         List<Node> nodeList = nodeLabels.stream().map(label->graph.findNode(label)).filter(n->n!=null).collect(Collectors.toList());
@@ -65,6 +66,13 @@ public class PageRank {
             }));
         }
 
+        pool.shutdown();
+        try {
+            pool.awaitTermination(timeoutSeconds, TimeUnit.SECONDS);
+        } catch(Exception e) {
+            System.out.println("WARNING: Did not terminate!");
+            return null;
+        }
 
         // collect results
         return nodes.stream().filter(n->n.getWeights()[0]>1f/nodes.size()).sorted((n1,n2)->Float.compare(n2.getWeights()[0],n1.getWeights()[0])).limit(topN).map(n->new Pair<>(n.getLabel(),n.getWeights()[0])).collect(Collectors.toList());
