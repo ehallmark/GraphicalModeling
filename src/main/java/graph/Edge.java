@@ -7,11 +7,17 @@ import java.util.Objects;
  */
 public class Edge {
 
-    private Node node1;
-    private Node node2;
+    protected Node node1;
+    protected Node node2;
+    protected boolean ordered;
     protected Edge(Node node1, Node node2) {
+        this(node1,node2,true);
+    }
+
+    protected Edge(Node node1, Node node2,boolean ordered) {
         this.node1=node1;
         this.node2=node2;
+        this.ordered=ordered;
     }
 
     public Node getNode1() {return node1; }
@@ -33,8 +39,10 @@ public class Edge {
             return true;
         }
 
-        if(node2.equals(otherNode1)&&node1.equals(otherNode2)) {
-            return true;
+        if(!ordered) {
+            if (node2.equals(otherNode1) && node1.equals(otherNode2)) {
+                return true;
+            }
         }
 
         return false;
@@ -42,6 +50,11 @@ public class Edge {
 
     @Override
     public int hashCode() {
-        return Objects.hash(node1,node2);
+
+        if(ordered) {
+            return Objects.hash(node1,node2);
+        } else {
+            return Objects.hash(node1,node2)/2 + Objects.hash(node2,node1)/2;
+        }
     }
 }

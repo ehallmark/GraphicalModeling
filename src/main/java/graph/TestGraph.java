@@ -14,10 +14,10 @@ public class TestGraph {
         Node n2 = graph.addNode("Node 2",3);
         Node n3 = graph.addNode("Node 3",10);
 
-        Edge e12 = graph.connectNodes("Node 1","Node 2");
-        Edge e23 = graph.connectNodes(n2,n3);
+        Edge e12 = graph.connectNodes("Node 1","Node 2",false);
+        Edge e23 = graph.connectNodes(n2,n3,false);
 
-        if(!e12.equals(graph.connectNodes("Node 1","Node 2"))) {
+        if(!e12.equals(graph.connectNodes("Node 1","Node 2",true))) {
             System.out.println("Error!");
         } else {
             System.out.println("PASSED");

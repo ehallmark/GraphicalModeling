@@ -43,7 +43,6 @@ public class Node {
             synchronized (neighbors) {
                 edgeIndexMap.put(edge, neighbors.size());
                 neighbors.add(otherNode);
-
             }
             return edge;
         }
