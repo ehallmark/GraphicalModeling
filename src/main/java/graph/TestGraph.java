@@ -3,12 +3,35 @@ package graph;
 import graph.Edge;
 import graph.Graph;
 import graph.Node;
+import util.Pair;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * Created by Evan on 4/16/2017.
  */
 public class TestGraph {
+    public static void test2() {
+        Graph graph = new Graph();
+        Node n1 = graph.addNode("Node 1",2);
+        Node n2 = graph.addNode("Node 2",2);
+
+        Edge e12 = graph.connectNodes("Node 1","Node 2",false);
+       // Edge e23 = graph.connectNodes(n2,n3,false);
+
+        graph.addFactorNode(new float[]{1,2,2,4},n1,n2);
+        //graph.addFactorNode(new float[]{7,8,9,10,11,12},n2,n3);
+
+        FactorNode ve = graph.variableElimination(new String[]{"Node 1"}, Arrays.asList(new Pair<>("Node 2",1)));
+
+        System.out.println(ve.toString());
+    }
+
     public static void main(String[] args) throws Exception {
+        test2();
+
+
         Graph graph = new Graph();
         Node n1 = graph.addNode("Node 1",2);
         Node n2 = graph.addNode("Node 2",3);
@@ -48,5 +71,7 @@ public class TestGraph {
         }
 
         graph.addFactorNode(new float[]{1,2,3,4,5,6},n1,n2);
+
+
     }
 }

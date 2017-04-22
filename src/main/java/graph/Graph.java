@@ -1,5 +1,7 @@
 package graph;
 
+import util.Pair;
+
 import java.util.*;
 
 /**
@@ -60,5 +62,77 @@ public class Graph {
         Edge edge = node1.connectNode(node2);
         if(!directed)node2.connectNode(node1);
         return edge;
+    }
+
+    public FactorNode variableElimination(String[] queryVars, List<Pair<String,Integer>> varAssignments) {
+        Set<String> queryLabels = new HashSet<>();
+        Arrays.stream(queryVars).forEach(var->queryLabels.add(var));
+        Set<String> evidenceLabels = new HashSet<>();
+        varAssignments.forEach(a->evidenceLabels.add(a._1));
+        // choose elimination ordering
+
+
+        // Initialize F
+        List<FactorNode> F = new LinkedList<>();
+        for(FactorNode fac : factorNodes) {
+            F.add(fac);
+        }
+
+        // HOW TO ADD EVIDENCE?
+        for(Pair<String,Integer> assignment : varAssignments) {
+            Node x = labelToNodeMap.get(assignment._1);
+            float[] weights = new float[x.cardinality];
+            for(int i = 0; i < x.cardinality; i++) {
+                if(assignment._2.equals(i)) {
+                    weights[i]=2f;
+                } else {
+                    weights[i]=0f;
+                }
+            }
+            F.add(new FactorNode(weights,new String[]{x.getLabel()},new int[]{x.cardinality}));
+        }
+
+        for(Node z : allNodesList) {
+            if(!queryLabels.contains(z.getLabel())) {
+                F = sumProductVariableElimination(F, z);
+            }
+        }
+
+        if(F.isEmpty()) throw new RuntimeException("Factor Stack should not be empty");
+
+        // multiply to get query
+        FactorNode query = F.remove(0);
+        while(!F.isEmpty()) query = query.multiply(F.remove(0));
+
+        float sum = query.sumOut(query.varLabels).getWeights()[0];
+
+        // normalize
+        query.reNormalize(x->{
+            for(int i = 0; i < x.length; i++) {
+                x[i]=x[i]/sum;
+            }
+            return x;
+        });
+
+        return query;
+    }
+
+    protected List<FactorNode> sumProductVariableElimination(List<FactorNode> F, Node x) {
+        FactorNode newFac = null;
+        List<FactorNode> newList = new LinkedList<>();
+        while(!F.isEmpty()) {
+            FactorNode f = F.remove(0);
+            if(f.varToIndexMap.containsKey(x.getLabel())) {
+                if(newFac==null) newFac=f;
+                else newFac=newFac.multiply(f);
+            } else {
+                newList.add(f);
+            }
+        }
+        if(newFac==null) throw new RuntimeException("Nothing happend");
+        // sum out
+        newFac=newFac.sumOut(new String[]{x.getLabel()});
+        newList.add(newFac);
+        return newList;
     }
 }

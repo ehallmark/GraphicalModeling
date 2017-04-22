@@ -130,7 +130,7 @@ public class FactorNode extends Node {
 
         int numAssignmentsTotal = numAssignmentCombinations(unionCardinalities);
         float[] psi = new float[numAssignmentsTotal];
-        for( int i = 0; i < numAssignmentsTotal-1; i++) {
+        for( int i = 0; i < numAssignmentsTotal; i++) {
             psi[i] = f.apply(new FloatPair(weights[j],other.weights[k]));
             for(int l = 0; l < unionSize; l++) {
                 assignments[l]++;
@@ -229,5 +229,12 @@ public class FactorNode extends Node {
             }
         }
         return strides;
+    }
+
+
+    @Override
+    public String toString() {
+        return "Name: "+label+"\n"+"Scope: "+Arrays.toString(varLabels)+"\n"+
+                "Factors: "+Arrays.toString(weights);
     }
 }
