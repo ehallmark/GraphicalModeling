@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by ehallmark on 4/21/17.
@@ -18,7 +19,13 @@ public class PageRank extends RankGraph<PageRank> {
     }
 
     protected double rankValue(Node node) {
-        throw new NotImplementedException();
+        return (1d-damping)/nodes.size() + damping * node.getNeighbors().stream().collect(Collectors.summingDouble(neighbor->{
+            Float rank = rankTable.get(neighbor.getLabel());
+            if(rank==null)rank=0f;
+            if(neighbor.getNeighbors().size()>0) {
+                return (double)rank/neighbor.getNeighbors().size();
+            } else return 0d;
+        }));
     }
 
     public void solve(int numEpochs) {
@@ -40,10 +47,9 @@ public class PageRank extends RankGraph<PageRank> {
             nodes.add(graph.addNode(label));
         });
         labelToCitationLabelsMap.forEach((label,citations)->{
-            rankTable.put(new Pair<>(label,label).toString(),1f);
+            rankTable.put(label,1f/nodes.size());
             citations.forEach(citation->{
                 graph.connectNodes(label, citation, true);
-                rankTable.put(new Pair<>(label,citation).toString(),0f);
             });
         });
         if(nodes.size()!=labelToCitationLabelsMap.size()) throw new RuntimeException("Error constructing graph!");
