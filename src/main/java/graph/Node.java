@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Created by ehallmark on 4/13/17.
@@ -18,6 +19,10 @@ import java.util.Map;
 public class Node {
     @Getter
     protected final List<Node> neighbors;
+    @Getter
+    protected final List<Node> inBound;
+    @Getter
+    protected final List<Node> outBound;
     @Getter
     protected final List<FactorNode> factors;
     @Getter
@@ -38,9 +43,10 @@ public class Node {
         this.edgeIndexMap=new HashMap<>();
         this.factors=new ArrayList<>();
         this.factorEdgeIndexMap = new HashMap<>();
+        this.outBound=new ArrayList<>();
+        this.inBound=new ArrayList<>();
         this.directed=directed;
     }
-
 
     public Edge connectNode(Node otherNode) {
         Edge edge;
@@ -55,6 +61,10 @@ public class Node {
             synchronized (neighbors) {
                 edgeIndexMap.put(edge, neighbors.size());
                 neighbors.add(otherNode);
+            }
+            if(directed) {
+                outBound.add(otherNode);
+                if(!otherNode.inBound.contains(this))otherNode.inBound.add(this);
             }
             return edge;
         }

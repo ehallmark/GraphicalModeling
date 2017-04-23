@@ -16,9 +16,9 @@ public class TestGraph {
         Node n1 = graph.addNode("Node 1",2);
         Node n2 = graph.addNode("Node 2",2);
         Node n3 = graph.addNode("Node 3",3);
-        Edge e12 = graph.connectNodes("Node 1","Node 2");
-        graph.connectNodes("Node 3","Node 1");
-        graph.connectNodes("Node 2","Node 3");
+        //Edge e12 = graph.connectNodes("Node 1","Node 2");
+       // graph.connectNodes("Node 3","Node 1");
+       // graph.connectNodes("Node 2","Node 3");
        // UndirectedEdge e23 = graph.connectNodes(n2,n3,false);
 
         graph.addFactorNode(new float[]{1,2,2,4},n1,n2);

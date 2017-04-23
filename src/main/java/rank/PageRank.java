@@ -19,11 +19,11 @@ public class PageRank extends RankGraph<PageRank> {
     }
 
     protected double rankValue(Node node) {
-        return (1d-damping)/nodes.size() + damping * node.getNeighbors().stream().collect(Collectors.summingDouble(neighbor->{
+        return (1d-damping)/nodes.size() + damping * node.getInBound().stream().collect(Collectors.summingDouble(neighbor->{
             Float rank = rankTable.get(neighbor.getLabel());
             if(rank==null)rank=0f;
-            if(neighbor.getNeighbors().size()>0) {
-                return (double)rank/neighbor.getNeighbors().size();
+            if(neighbor.getInBound().size()>0) {
+                return (double)rank/neighbor.getInBound().size();
             } else return 0d;
         }));
     }

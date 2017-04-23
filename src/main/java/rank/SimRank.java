@@ -65,9 +65,10 @@ public class SimRank extends RankGraph<SimRank> {
     }
 
     protected double rankValue(Node n1, Node n2) {
-        return (damping / (n1.getNeighbors().size()*n2.getNeighbors().size())) *
-                n1.getNeighbors().stream().collect(Collectors
-                        .summingDouble(fam1->n2.getNeighbors().stream().collect(Collectors.summingDouble(fam2->{
+        if(n1.getInBound().size()==0||n2.getInBound().size()==0) return 0d;
+        return (damping / (n1.getInBound().size()*n2.getInBound().size())) *
+                n1.getInBound().stream().collect(Collectors
+                        .summingDouble(fam1->n2.getInBound().stream().collect(Collectors.summingDouble(fam2->{
                             Float famRank = rankTable.get(new Pair<>(fam1,fam2).toString());
                             if(famRank==null) return 0f;
                             else return famRank;
