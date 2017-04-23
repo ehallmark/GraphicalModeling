@@ -15,14 +15,16 @@ public class TestGraph {
         Graph graph = new Graph(false);
         Node n1 = graph.addNode("Node 1",2);
         Node n2 = graph.addNode("Node 2",2);
-
-        Edge e12 = graph.connectNodes("Node 1","Node 2",false);
+        Node n3 = graph.addNode("Node 3",3);
+        Edge e12 = graph.connectNodes("Node 1","Node 2");
+        graph.connectNodes("Node 3","Node 1");
+        graph.connectNodes("Node 2","Node 3");
        // UndirectedEdge e23 = graph.connectNodes(n2,n3,false);
 
         graph.addFactorNode(new float[]{1,2,2,4},n1,n2);
-        //graph.addFactorNode(new float[]{7,8,9,10,11,12},n2,n3);
+        graph.addFactorNode(new float[]{7,8,9,10,11,12},n2,n3);
 
-        FactorNode ve = graph.variableElimination(new String[]{"Node 1"}, Arrays.asList(new Pair<>("Node 2",1)));
+        FactorNode ve = graph.variableElimination(new String[]{"Node 3","Node 2"}, Arrays.asList(new Pair<>("Node 1",1)));
 
         System.out.println(ve.toString());
     }
@@ -36,10 +38,10 @@ public class TestGraph {
         Node n2 = graph.addNode("Node 2",3);
         Node n3 = graph.addNode("Node 3",10);
 
-        Edge e12 = graph.connectNodes("Node 1","Node 2",false);
-        Edge e23 = graph.connectNodes(n2,n3,false);
+        Edge e12 = graph.connectNodes("Node 1","Node 2");
+        Edge e23 = graph.connectNodes(n2,n3);
 
-        if(!e12.equals(graph.connectNodes("Node 1","Node 2",true))) {
+        if(!e12.equals(graph.connectNodes("Node 1","Node 2"))) {
             System.out.println("Error!");
         } else {
             System.out.println("PASSED");
@@ -57,7 +59,7 @@ public class TestGraph {
             System.out.println("PASSED");
         }
 
-        if(!n1.equals(new Node("Node 1",10,false) {})) {
+        if(!n1.equals(new Node("Node 1",10,true) {})) {
             System.out.println("Error!");
         } else {
             System.out.println("PASSED");

@@ -59,11 +59,11 @@ public class Graph {
         return factor;
     }
 
-    public Edge connectNodes(String label1, String label2, boolean directed) {
-        return connectNodes(labelToNodeMap.get(label1),labelToNodeMap.get(label2),directed);
+    public Edge connectNodes(String label1, String label2) {
+        return connectNodes(labelToNodeMap.get(label1),labelToNodeMap.get(label2));
     }
 
-    public Edge connectNodes(Node node1, Node node2, boolean directed) {
+    public Edge connectNodes(Node node1, Node node2) {
         if(node1==null||node2==null) return null;
         Edge edge = node1.connectNode(node2);
         if(!directed)node2.connectNode(node1);

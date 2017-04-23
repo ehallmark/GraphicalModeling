@@ -24,7 +24,7 @@ public class SimRank extends RankGraph<SimRank> {
         labelToCitationLabelsMap.forEach((label,citations)->{
             rankTable.put(new Pair<>(label,label).toString(),1f);
             citations.forEach(citation->{
-                graph.connectNodes(label, citation, true);
+                graph.connectNodes(label, citation);
                 rankTable.put(new Pair<>(label,citation).toString(),0f);
             });
         });

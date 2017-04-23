@@ -49,7 +49,7 @@ public class PageRank extends RankGraph<PageRank> {
         labelToCitationLabelsMap.forEach((label,citations)->{
             rankTable.put(label,1f/nodes.size());
             citations.forEach(citation->{
-                graph.connectNodes(label, citation, true);
+                graph.connectNodes(label, citation);
             });
         });
         if(nodes.size()!=labelToCitationLabelsMap.size()) throw new RuntimeException("Error constructing graph!");
