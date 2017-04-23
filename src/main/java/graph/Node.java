@@ -1,6 +1,9 @@
 package graph;
 
 
+import graph.edges.DirectedEdge;
+import graph.edges.Edge;
+import graph.edges.UndirectedEdge;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,24 +22,33 @@ public class Node {
     protected final List<FactorNode> factors;
     @Getter
     protected final String label;
+    @Getter
     protected final int cardinality;
     @Getter @Setter
     protected float[] weights;
     protected final Map<Edge,Integer> edgeIndexMap;
     protected final Map<Edge,Integer> factorEdgeIndexMap;
+    @Getter
+    protected boolean directed;
 
-    protected Node(String label, int cardinality) {
+    public Node(String label, int cardinality, boolean directed) {
         this.label=label;
         this.neighbors=new ArrayList<>();
         this.cardinality=cardinality;
         this.edgeIndexMap=new HashMap<>();
         this.factors=new ArrayList<>();
         this.factorEdgeIndexMap = new HashMap<>();
+        this.directed=directed;
     }
 
 
     public Edge connectNode(Node otherNode) {
-        Edge edge = new Edge(this, otherNode);
+        Edge edge;
+        if(directed) {
+            edge = new DirectedEdge(this,otherNode);
+        } else {
+            edge = new UndirectedEdge(this,otherNode);
+        }
         if (edgeIndexMap.containsKey(edge)) {
             return edge;
         } else {
@@ -49,7 +61,7 @@ public class Node {
     }
 
     public Edge connectFactor(FactorNode otherFactor) {
-        Edge edge = new Edge(this, otherFactor);
+        Edge edge = new UndirectedEdge(this, otherFactor);
         if (factorEdgeIndexMap.containsKey(edge)) {
             return edge;
         } else {

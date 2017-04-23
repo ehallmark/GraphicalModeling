@@ -1,5 +1,9 @@
-package graph;
+package graph.graphs;
 
+import graph.FactorNode;
+import graph.Node;
+import graph.edges.Edge;
+import graph.edges.UndirectedEdge;
 import util.Pair;
 
 import java.util.*;
@@ -8,14 +12,16 @@ import java.util.*;
  * Created by Evan on 4/13/2017.
  */
 public class Graph {
-    private Map<String,Node> labelToNodeMap;
-    private Set<FactorNode> factorNodes;
-    private List<Node> allNodesList;
+    protected Map<String, Node> labelToNodeMap;
+    protected Set<FactorNode> factorNodes;
+    protected List<Node> allNodesList;
+    protected boolean directed;
 
-    public Graph() {
+    public Graph(boolean directed) {
         this.labelToNodeMap=new HashMap<>();
         this.allNodesList=new ArrayList<>();
         this.factorNodes=new HashSet<>();
+        this.directed=directed;
     }
 
     public Node addNode(String label) { // default binary
@@ -28,24 +34,24 @@ public class Graph {
 
     public Node addNode(String label, int cardinality) {
         if(labelToNodeMap.containsKey(label)) throw new RuntimeException("Label already exists");
-        Node node = new Node(label,cardinality);
+        Node node = new Node(label,cardinality,directed);
         allNodesList.add(node);
         labelToNodeMap.put(label, node);
         return node;
     }
 
-    public FactorNode addFactorNode(float[] weights, Node... nodes) {
-        String[] connectingLabels = new String[nodes.length];
-        int[] varCardinalities = new int[nodes.length];
-        for(int i = 0; i < nodes.length; i++) {
-            Node node = nodes[i];
-            String label = nodes[i].getLabel();
+    public FactorNode addFactorNode(float[] weights, Node... connectingNodes) {
+        String[] connectingLabels = new String[connectingNodes.length];
+        int[] varCardinalities = new int[connectingNodes.length];
+        for(int i = 0; i < connectingNodes.length; i++) {
+            Node node = connectingNodes[i];
+            String label = connectingNodes[i].getLabel();
             if(label==null) throw new RuntimeException("Unable to find node");
             connectingLabels[i] = label;
-            varCardinalities[i] = node.cardinality;
+            varCardinalities[i] = node.getCardinality();
         }
         FactorNode factor = new FactorNode(weights,connectingLabels,varCardinalities);
-        Arrays.stream(nodes).forEach(node->{
+        Arrays.stream(connectingNodes).forEach(node->{
             node.connectFactor(factor);
             factor.connectNode(node);
         });
@@ -81,15 +87,15 @@ public class Graph {
         // HOW TO ADD EVIDENCE?
         for(Pair<String,Integer> assignment : varAssignments) {
             Node x = labelToNodeMap.get(assignment._1);
-            float[] weights = new float[x.cardinality];
-            for(int i = 0; i < x.cardinality; i++) {
+            float[] weights = new float[x.getCardinality()];
+            for(int i = 0; i < x.getCardinality(); i++) {
                 if(assignment._2.equals(i)) {
                     weights[i]=2f;
                 } else {
                     weights[i]=0f;
                 }
             }
-            F.add(new FactorNode(weights,new String[]{x.getLabel()},new int[]{x.cardinality}));
+            F.add(new FactorNode(weights,new String[]{x.getLabel()},new int[]{x.getCardinality()}));
         }
 
         for(Node z : allNodesList) {
@@ -104,7 +110,7 @@ public class Graph {
         FactorNode query = F.remove(0);
         while(!F.isEmpty()) query = query.multiply(F.remove(0));
 
-        float sum = query.sumOut(query.varLabels).getWeights()[0];
+        float sum = query.sumOut(query.getVarLabels()).getWeights()[0];
 
         // normalize
         query.reNormalize(x->{
@@ -122,7 +128,7 @@ public class Graph {
         List<FactorNode> newList = new LinkedList<>();
         while(!F.isEmpty()) {
             FactorNode f = F.remove(0);
-            if(f.varToIndexMap.containsKey(x.getLabel())) {
+            if(f.getVarToIndexMap().containsKey(x.getLabel())) {
                 if(newFac==null) newFac=f;
                 else newFac=newFac.multiply(f);
             } else {

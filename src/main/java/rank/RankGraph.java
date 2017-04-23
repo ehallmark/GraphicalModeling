@@ -1,15 +1,10 @@
 package rank;
 
-import graph.Graph;
+import graph.graphs.Graph;
 import graph.Node;
-import util.Pair;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveAction;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * Created by ehallmark on 4/21/17.
@@ -24,7 +19,7 @@ public abstract class RankGraph<T> implements Serializable {
     protected File file;
     protected RankGraph(File file, Map<String, ? extends Collection<String>> labelToCitationLabelsMap, double damping) {
         if(damping<0||damping>1) throw new RuntimeException("Illegal damping constant");
-        this.graph=new Graph();
+        this.graph=new Graph(true);
         this.damping=damping;
         this.nodes = new HashSet<>(labelToCitationLabelsMap.size());
         this.init(labelToCitationLabelsMap);

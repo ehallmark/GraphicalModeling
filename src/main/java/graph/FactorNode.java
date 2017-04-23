@@ -1,9 +1,9 @@
 package graph;
 
+import lombok.Getter;
 import util.FloatPair;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -11,18 +11,23 @@ import java.util.stream.Stream;
  * Created by Evan on 4/13/2017.
  */
 public class FactorNode extends Node {
+    @Getter
     protected int[] strides;
+    @Getter
     protected int[] cardinalities;
+    @Getter
     protected int numVariables;
     protected Map<String,Integer> cardinalityMap;
     protected Map<String,Integer> strideMap;
+    @Getter
     protected String[] varLabels;
+    @Getter
     protected Map<String,Integer> varToIndexMap;
     protected int numAssignments;
 
     // 1 dimension array // if null then unnamed
-    protected FactorNode(float[] weights, String[] varLabels, int[] cardinalities) {
-        super(null,0);
+    public FactorNode(float[] weights, String[] varLabels, int[] cardinalities) {
+        super(null,0,false);
         if(varLabels.length!=cardinalities.length) throw new RuntimeException("varLabels and Cardinalities must have same size");
         this.varLabels=varLabels;
         this.cardinalities=cardinalities;
