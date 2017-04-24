@@ -1,21 +1,29 @@
-package graph.graphs;
+package model.graphs;
 
-import graph.FactorNode;
-import graph.Node;
-import graph.edges.Edge;
-import graph.edges.UndirectedEdge;
+import lombok.Getter;
+import lombok.Setter;
+import model.nodes.FactorNode;
+import model.nodes.Node;
+import model.edges.Edge;
+import util.Assignment;
 import util.Pair;
 
+import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 /**
  * Created by Evan on 4/13/2017.
  */
-public class Graph {
+public abstract class Graph implements Serializable {
     protected Map<String, Node> labelToNodeMap;
     protected Set<FactorNode> factorNodes;
     protected List<Node> allNodesList;
     protected boolean directed;
+    @Getter @Setter
+    protected Assignment currentAssignment;
+    protected Stream<Assignment> dataAssignments;
 
     public Graph(boolean directed) {
         this.labelToNodeMap=new HashMap<>();
@@ -24,7 +32,7 @@ public class Graph {
         this.directed=directed;
     }
 
-    public Node addNode(String label) { // default binary
+    public Node addBinaryNode(String label) { // default binary
         return this.addNode(label,2);
     }
 
@@ -68,7 +76,11 @@ public class Graph {
         return edge;
     }
 
-    public FactorNode variableElimination(String[] queryVars, List<Pair<String,Integer>> varAssignments) {
+    public void removeCurrentAssignment() {
+        currentAssignment=null;
+    }
+
+    public FactorNode variableElimination(String[] queryVars, Assignment varAssignments) {
         Set<String> queryLabels = new HashSet<>();
         Arrays.stream(queryVars).forEach(var->queryLabels.add(var));
         Set<String> evidenceLabels = new HashSet<>();
@@ -77,36 +89,36 @@ public class Graph {
 
 
         // Initialize F
-        List<FactorNode> F = new LinkedList<>();
-        for(FactorNode fac : factorNodes) {
-            F.add(fac);
-        }
+        AtomicReference<List<FactorNode>> F = new AtomicReference<>(new LinkedList<>());
+        factorNodes.forEach(fac->{
+            F.get().add(fac);
+        });
 
         // HOW TO ADD EVIDENCE?
-        for(Pair<String,Integer> assignment : varAssignments) {
+        varAssignments.forEach(assignment->{
             Node x = labelToNodeMap.get(assignment._1);
             float[] weights = new float[x.getCardinality()];
             for(int i = 0; i < x.getCardinality(); i++) {
                 if(assignment._2.equals(i)) {
-                    weights[i]=2f;
+                    weights[i]=1f;
                 } else {
                     weights[i]=0f;
                 }
             }
-            F.add(new FactorNode(weights,new String[]{x.getLabel()},new int[]{x.getCardinality()}));
-        }
+            F.get().add(new FactorNode(weights,new String[]{x.getLabel()},new int[]{x.getCardinality()}));
+        });
 
         for(Node z : allNodesList) {
             if(!queryLabels.contains(z.getLabel())) {
-                F = sumProductVariableElimination(F, z);
+                F.set(sumProductVariableElimination(F.get(), z));
             }
         }
 
-        if(F.isEmpty()) throw new RuntimeException("Factor Stack should not be empty");
+        if(F.get().isEmpty()) throw new RuntimeException("Factor Stack should not be empty");
 
         // multiply to get query
-        FactorNode query = F.remove(0);
-        while(!F.isEmpty()) query = query.multiply(F.remove(0));
+        FactorNode query = F.get().remove(0);
+        while(!F.get().isEmpty()) query = query.multiply(F.get().remove(0));
 
         float sum = query.sumOut(query.getVarLabels()).getWeights()[0];
 
@@ -133,7 +145,7 @@ public class Graph {
                 newList.add(f);
             }
         }
-        if(newFac==null) throw new RuntimeException("Nothing happend");
+        if(newFac==null) throw new RuntimeException("Nothing happened");
         // sum out
         newFac=newFac.sumOut(new String[]{x.getLabel()});
         newList.add(newFac);

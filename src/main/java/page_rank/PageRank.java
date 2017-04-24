@@ -1,8 +1,6 @@
-package rank;
+package page_rank;
 
-import graph.Node;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-import util.Pair;
+import model.nodes.Node;
 
 import java.io.File;
 import java.util.Collection;
@@ -44,7 +42,7 @@ public class PageRank extends RankGraph<PageRank> {
     protected void init(Map<String, ? extends Collection<String>> labelToCitationLabelsMap) {
         this.rankTable=new HashMap<>();
         labelToCitationLabelsMap.keySet().forEach(label->{
-            nodes.add(graph.addNode(label));
+            nodes.add(graph.addBinaryNode(label));
         });
         labelToCitationLabelsMap.forEach((label,citations)->{
             rankTable.put(label,1f/nodes.size());

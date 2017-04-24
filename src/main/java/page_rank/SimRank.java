@@ -1,6 +1,6 @@
-package rank;
+package page_rank;
 
-import graph.Node;
+import model.nodes.Node;
 import util.Pair;
 
 import java.io.File;
@@ -19,7 +19,7 @@ public class SimRank extends RankGraph<SimRank> {
     protected void init(Map<String, ? extends Collection<String>> labelToCitationLabelsMap) {
         this.rankTable=new HashMap<>();
         labelToCitationLabelsMap.keySet().forEach(label->{
-            nodes.add(graph.addNode(label));
+            nodes.add(graph.addBinaryNode(label));
         });
         labelToCitationLabelsMap.forEach((label,citations)->{
             rankTable.put(new Pair<>(label,label).toString(),1f);

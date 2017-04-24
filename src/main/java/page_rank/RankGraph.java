@@ -1,7 +1,8 @@
-package rank;
+package page_rank;
 
-import graph.graphs.Graph;
-import graph.Node;
+import model.graphs.BayesianNet;
+import model.graphs.Graph;
+import model.nodes.Node;
 
 import java.io.*;
 import java.util.*;
@@ -19,7 +20,7 @@ public abstract class RankGraph<T> implements Serializable {
     protected File file;
     protected RankGraph(File file, Map<String, ? extends Collection<String>> labelToCitationLabelsMap, double damping) {
         if(damping<0||damping>1) throw new RuntimeException("Illegal damping constant");
-        this.graph=new Graph(true);
+        this.graph=new BayesianNet();
         this.damping=damping;
         this.nodes = new HashSet<>(labelToCitationLabelsMap.size());
         this.init(labelToCitationLabelsMap);

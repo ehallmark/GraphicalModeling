@@ -1,11 +1,8 @@
-package graph.edges;
+package model.edges;
 
-import graph.Node;
-import lombok.Getter;
-import util.Pair;
+import model.nodes.Node;
 
 import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * Created by Evan on 4/23/2017.

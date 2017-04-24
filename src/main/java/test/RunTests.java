@@ -1,7 +1,7 @@
 package test;
 
-import graph.TestFactorNode;
-import graph.TestGraph;
+import model.nodes.TestFactorNode;
+import model.graphs.TestGraph;
 
 /**
  * Created by ehallmark on 4/18/17.

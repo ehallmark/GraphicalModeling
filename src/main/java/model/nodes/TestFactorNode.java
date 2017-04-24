@@ -1,6 +1,4 @@
-package graph;
-
-import graph.FactorNode;
+package model.nodes;
 
 import java.util.Arrays;
 

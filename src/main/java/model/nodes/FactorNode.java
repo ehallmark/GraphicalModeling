@@ -1,8 +1,7 @@
-package graph;
+package model.nodes;
 
-import graph.edges.Edge;
 import lombok.Getter;
-import util.FloatPair;
+import util.FloatFloatPair;
 
 import java.util.*;
 import java.util.function.Function;
@@ -111,7 +110,7 @@ public class FactorNode extends Node {
         return applyFunction(other,(pair->pair._2==0?0:pair._1/pair._2));
     }
 
-    public FactorNode applyFunction(FactorNode other, Function<FloatPair,Float> f) {
+    public FactorNode applyFunction(FactorNode other, Function<FloatFloatPair,Float> f) {
         // Get the union of X1 and X2
         String[] unionLabels = labelUnion(other);
         int unionSize = unionLabels.length;
@@ -137,7 +136,7 @@ public class FactorNode extends Node {
         int numAssignmentsTotal = numAssignmentCombinations(unionCardinalities);
         float[] psi = new float[numAssignmentsTotal];
         for( int i = 0; i < numAssignmentsTotal; i++) {
-            psi[i] = f.apply(new FloatPair(weights[j],other.weights[k]));
+            psi[i] = f.apply(new FloatFloatPair(weights[j],other.weights[k]));
             for(int l = 0; l < unionSize; l++) {
                 assignments[l]++;
                 if(assignments[l]==unionCardinalities[l]) {

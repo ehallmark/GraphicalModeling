@@ -1,6 +1,6 @@
-package graph.edges;
+package model.edges;
 
-import graph.Node;
+import model.nodes.Node;
 
 import java.util.Objects;
 

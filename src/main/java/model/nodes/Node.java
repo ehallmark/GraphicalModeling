@@ -1,9 +1,9 @@
-package graph;
+package model.nodes;
 
 
-import graph.edges.DirectedEdge;
-import graph.edges.Edge;
-import graph.edges.UndirectedEdge;
+import model.edges.DirectedEdge;
+import model.edges.Edge;
+import model.edges.UndirectedEdge;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 /**
  * Created by ehallmark on 4/13/17.
@@ -36,6 +35,8 @@ public class Node {
     @Getter
     protected boolean directed;
 
+    // Null means not assigned
+
     public Node(String label, int cardinality, boolean directed) {
         this.label=label;
         this.neighbors=new ArrayList<>();
@@ -59,7 +60,6 @@ public class Node {
         otherNode.addEdgeAndNeighbor(edge,this);
         return edge;
     }
-
 
     protected void addEdgeAndNeighbor(Edge edge, Node otherNode) {
         if (!edgeIndexMap.containsKey(edge)) {

@@ -1,8 +1,8 @@
-package graph;
+package model.graphs;
 
-import graph.edges.Edge;
-import graph.edges.UndirectedEdge;
-import graph.graphs.Graph;
+import model.edges.Edge;
+import model.nodes.FactorNode;
+import model.nodes.Node;
 import util.Pair;
 
 import java.util.Arrays;
@@ -12,7 +12,7 @@ import java.util.Arrays;
  */
 public class TestGraph {
     public static void test2() {
-        Graph graph = new Graph(false);
+        Graph graph = new MarkovNet();
         Node n1 = graph.addNode("Node 1",2);
         Node n2 = graph.addNode("Node 2",2);
         Node n3 = graph.addNode("Node 3",3);
@@ -32,8 +32,7 @@ public class TestGraph {
     public static void main(String[] args) throws Exception {
         test2();
 
-
-        Graph graph = new Graph(false);
+        Graph graph = new MarkovNet();
         Node n1 = graph.addNode("Node 1",2);
         Node n2 = graph.addNode("Node 2",3);
         Node n3 = graph.addNode("Node 3",10);

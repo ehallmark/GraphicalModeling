@@ -1,6 +1,6 @@
-package graph.edges;
+package model.edges;
 
-import graph.Node;
+import model.nodes.Node;
 
 /**
  * Created by Evan on 4/23/2017.
