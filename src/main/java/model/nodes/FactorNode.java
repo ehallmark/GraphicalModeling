@@ -1,6 +1,7 @@
 package model.nodes;
 
 import lombok.Getter;
+import lombok.Setter;
 import util.FloatFloatPair;
 
 import java.util.*;
@@ -21,6 +22,8 @@ public class FactorNode extends Node {
     protected Map<String,Integer> strideMap;
     @Getter
     protected String[] varLabels;
+    @Getter @Setter
+    protected float[] weights;
     @Getter
     protected Map<String,Integer> varToIndexMap;
     protected int numAssignments;

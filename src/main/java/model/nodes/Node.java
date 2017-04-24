@@ -28,8 +28,6 @@ public class Node {
     protected final String label;
     @Getter
     protected final int cardinality;
-    @Getter @Setter
-    protected float[] weights;
     protected final Map<Edge,Integer> edgeIndexMap;
     protected final Map<Edge,Integer> factorEdgeIndexMap;
     @Getter

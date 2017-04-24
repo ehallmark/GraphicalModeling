@@ -18,7 +18,9 @@ import java.util.stream.Stream;
  */
 public abstract class Graph implements Serializable {
     protected Map<String, Node> labelToNodeMap;
+    @Getter
     protected Set<FactorNode> factorNodes;
+    @Getter
     protected List<Node> allNodesList;
     protected boolean directed;
     @Getter @Setter
@@ -40,7 +42,7 @@ public abstract class Graph implements Serializable {
     }
 
     public Node addNode(String label, int cardinality) {
-        if(labelToNodeMap.containsKey(label)) throw new RuntimeException("Label already exists");
+        if(labelToNodeMap.containsKey(label)) return labelToNodeMap.get(label);
         Node node = new Node(label,cardinality,directed);
         allNodesList.add(node);
         labelToNodeMap.put(label, node);
@@ -73,8 +75,12 @@ public abstract class Graph implements Serializable {
         return nodes;
     }
 
-    public void applyLearningAlgorithm(LearningAlgorithm algorithm) {
-        algorithm.getAlgorithm().apply(this);
+    public void applyLearningAlgorithm(LearningAlgorithm function, int epochs) {
+        for(int epoch = 0; epoch < epochs; epoch++) {
+            System.out.println("Starting epoch: "+(epoch+1));
+            Double currentScore = function.runAlgorithm().andThen(function.computeCurrentScore()).apply(this);
+            System.out.println("    Score: "+currentScore);
+        }
     }
 
     public Edge connectNodes(String label1, String label2) {

@@ -1,11 +1,14 @@
 package page_rank;
 
+import model.graphs.Graph;
+import model.learning_algorithms.LearningAlgorithm;
 import model.nodes.Node;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -14,6 +17,11 @@ import java.util.stream.Collectors;
 public class PageRank extends RankGraph {
     public PageRank(Map<String, ? extends Collection<String>> labelToCitationLabelsMap, double damping) {
         super(labelToCitationLabelsMap, damping);
+    }
+
+    @Override
+    public LearningAlgorithm getLearningAlgorithm() {
+        return new Algorithm();
     }
 
     protected double rankValue(Node node) {
@@ -26,32 +34,42 @@ public class PageRank extends RankGraph {
         }));
     }
 
-    public void solve(int numEpochs) {
-        for(int epoch = 0; epoch < numEpochs; epoch++) {
-            System.out.println("Starting epoch ["+(epoch+1)+"]");
-            nodes.parallelStream().forEach(node->{
-                double rank = rankValue(node);
-                if(rank>0) {
-                    rankTable.put(node.getLabel(),(float)rank);
-                }
-            });
-        }
-    }
-
     @Override
-    protected void init(Map<String, ? extends Collection<String>> labelToCitationLabelsMap) {
+    protected void initGraph(Map<String, ? extends Collection<String>> labelToCitationLabelsMap) {
         this.rankTable=new HashMap<>();
-        labelToCitationLabelsMap.keySet().forEach(label->{
-            nodes.add(graph.addBinaryNode(label));
-        });
+        System.out.println("Adding initial nodes...");
         labelToCitationLabelsMap.forEach((label,citations)->{
-            rankTable.put(label,1f/nodes.size());
+            graph.addBinaryNode(label);
             citations.forEach(citation->{
+                graph.addBinaryNode(citation);
                 graph.connectNodes(label, citation);
             });
         });
-        if(nodes.size()!=labelToCitationLabelsMap.size()) throw new RuntimeException("Error constructing graph!");
+        this.nodes=graph.getAllNodesList();
+        this.nodes.forEach(node->{
+            rankTable.put(node.getLabel(),1f/nodes.size());
+        });
+        System.out.println("Done.");
     }
 
 
+    public class Algorithm implements LearningAlgorithm {
+        @Override
+        public Function<Graph, Graph> runAlgorithm() {
+            return (graph) -> {
+                nodes.parallelStream().forEach(node -> {
+                    double rank = rankValue(node);
+                    if (rank > 0) {
+                        rankTable.put(node.getLabel(), (float) rank);
+                    }
+                });
+                return graph;
+            };
+        }
+
+        @Override
+        public Function<Graph, Double> computeCurrentScore() {
+            return (graph)->0d;
+        }
+    }
 }

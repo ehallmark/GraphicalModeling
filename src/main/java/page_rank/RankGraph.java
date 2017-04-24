@@ -2,6 +2,7 @@ package page_rank;
 
 import model.graphs.BayesianNet;
 import model.graphs.Graph;
+import model.learning_algorithms.LearningAlgorithm;
 import model.nodes.Node;
 import util.ObjectIO;
 
@@ -12,25 +13,27 @@ import java.util.*;
  * Created by ehallmark on 4/21/17.
  */
 public abstract class RankGraph {
-    private static final long serialVersionUID = 1l;
-    protected transient Graph graph;
-    protected transient Set<Node> nodes;
+    protected Graph graph;
+    protected List<Node> nodes;
     protected double damping;
     protected Map<String,Float> rankTable;
 
     protected RankGraph(Map<String, ? extends Collection<String>> labelToCitationLabelsMap, double damping) {
+        System.out.println("Initializing RankGraph of type: "+this.getClass().getName());
         if(damping<0||damping>1) throw new RuntimeException("Illegal damping constant");
         this.graph=new BayesianNet();
         this.damping=damping;
-        this.nodes = new HashSet<>(labelToCitationLabelsMap.size());
-        this.init(labelToCitationLabelsMap);
+        this.initGraph(labelToCitationLabelsMap);
+        System.out.println("Finished "+this.getClass().getName());
     }
 
-    protected abstract void init(Map<String, ? extends Collection<String>> labelToCitationLabelsMap);
+    protected abstract void initGraph(Map<String, ? extends Collection<String>> labelToCitationLabelsMap);
 
+    protected abstract LearningAlgorithm getLearningAlgorithm();
 
-
-    public abstract void solve(int numEpochs);
+    public void solve(int numEpochs) {
+        graph.applyLearningAlgorithm(getLearningAlgorithm(),numEpochs);
+    }
 
     public void save(File file) {
         new ObjectIO().save(file, rankTable);

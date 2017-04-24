@@ -1,34 +1,43 @@
 package page_rank;
 
+import model.edges.Edge;
+import model.graphs.Graph;
+import model.learning_algorithms.LearningAlgorithm;
 import model.nodes.Node;
 import util.Pair;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * Created by ehallmark on 4/20/17.
  */
 public class SimRank extends RankGraph {
-
     public SimRank(Map<String, ? extends Collection<String>> labelToCitationLabelsMap, double damping) {
         super(labelToCitationLabelsMap, damping);
     }
 
-    protected void init(Map<String, ? extends Collection<String>> labelToCitationLabelsMap) {
+    protected void initGraph(Map<String, ? extends Collection<String>> labelToCitationLabelsMap) {
         this.rankTable=new HashMap<>();
-        labelToCitationLabelsMap.keySet().forEach(label->{
-            nodes.add(graph.addBinaryNode(label));
-        });
+        System.out.println("Adding initial nodes...");
         labelToCitationLabelsMap.forEach((label,citations)->{
+            graph.addBinaryNode(label);
             rankTable.put(new Pair<>(label,label).toString(),1f);
             citations.forEach(citation->{
+                graph.addBinaryNode(citation);
                 graph.connectNodes(label, citation);
-                rankTable.put(new Pair<>(label,citation).toString(),0f);
             });
         });
-        if(nodes.size()!=labelToCitationLabelsMap.size()) throw new RuntimeException("Error constructing graph!");
+        this.nodes=graph.getAllNodesList();
+        System.out.println("Done.");
+    }
+
+    @Override
+    public LearningAlgorithm getLearningAlgorithm() {
+        return new Algorithm();
     }
 
     public List<Pair<String,Float>> findSimilarDocuments(Collection<String> nodeLabels, int limit) {
@@ -55,19 +64,6 @@ public class SimRank extends RankGraph {
         return scoreMap.entrySet().stream().sorted((e1,e2)->e2.getValue().compareTo(e1.getValue())).limit(limit).map(e->new Pair<>(e.getKey(),e.getValue())).collect(Collectors.toList());
     }
 
-    @Override
-    public void solve(int numEpochs) {
-        for(int epoch = 0; epoch < numEpochs; epoch++) {
-            System.out.println("Starting epoch ["+(epoch+1)+"]");
-            nodes.parallelStream().forEach(n1->nodes.forEach(n2->{
-                double rank = rankValue(n1,n2);
-                if(rank>0) {
-                    rankTable.put(new Pair<>(n1.getLabel(),n2.getLabel()).toString(),(float)rank);
-                }
-            }));
-        }
-    }
-
     protected double rankValue(Node n1, Node n2) {
         if(n1.getInBound().size()==0||n2.getInBound().size()==0) return 0d;
         return (damping / (n1.getInBound().size()*n2.getInBound().size())) *
@@ -79,6 +75,28 @@ public class SimRank extends RankGraph {
                         }))));
     }
 
+    public class Algorithm implements LearningAlgorithm {
+        @Override
+        public Function<Graph, Graph> runAlgorithm() {
+            return (graph) -> {
+                AtomicInteger cnt = new AtomicInteger(0);
+                nodes.parallelStream().forEach(n1->nodes.parallelStream().forEach(n2->{
+                    double rank = rankValue(n1,n2);
+                    cnt.getAndIncrement();
+                    if(rank>0) {
+                        System.out.println("Adding to TABLE: Point: "+cnt.get()+", Rank: "+rank);
+                        rankTable.put(new Pair<>(n1.getLabel(),n2.getLabel()).toString(),(float)rank);
+                    }
+                }));
+                return graph;
+            };
+        }
+
+        @Override
+        public Function<Graph, Double> computeCurrentScore() {
+            return (graph)->0d;
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         Map<String,Collection<String>> test = new HashMap<>();
