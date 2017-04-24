@@ -66,6 +66,7 @@ public class SimRank extends RankGraph {
 
     protected double rankValue(Node n1, Node n2) {
         if(n1.getInBound().size()==0||n2.getInBound().size()==0) return 0d;
+        if(n1.equals(n2)) return 1d;
         return (damping / (n1.getInBound().size()*n2.getInBound().size())) *
                 n1.getInBound().stream().collect(Collectors
                         .summingDouble(fam1->n2.getInBound().stream().collect(Collectors.summingDouble(fam2->{
