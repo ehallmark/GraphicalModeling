@@ -2,6 +2,7 @@ package model.graphs;
 
 import lombok.Getter;
 import lombok.Setter;
+import model.learning_algorithms.LearningAlgorithm;
 import model.nodes.FactorNode;
 import model.nodes.Node;
 import model.edges.Edge;
@@ -70,6 +71,10 @@ public abstract class Graph implements Serializable {
             nodes.add(findNode(label));
         });
         return nodes;
+    }
+
+    public void applyLearningAlgorithm(LearningAlgorithm algorithm) {
+        algorithm.getAlgorithm().apply(this);
     }
 
     public Edge connectNodes(String label1, String label2) {
