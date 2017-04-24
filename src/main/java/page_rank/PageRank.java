@@ -11,9 +11,9 @@ import java.util.stream.Collectors;
 /**
  * Created by ehallmark on 4/21/17.
  */
-public class PageRank extends RankGraph<PageRank> {
-    protected PageRank(File file, Map<String, ? extends Collection<String>> labelToCitationLabelsMap, double damping) {
-        super(file, labelToCitationLabelsMap, damping);
+public class PageRank extends RankGraph {
+    public PageRank(Map<String, ? extends Collection<String>> labelToCitationLabelsMap, double damping) {
+        super(labelToCitationLabelsMap, damping);
     }
 
     protected double rankValue(Node node) {

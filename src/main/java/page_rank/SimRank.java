@@ -10,10 +10,10 @@ import java.util.stream.Collectors;
 /**
  * Created by ehallmark on 4/20/17.
  */
-public class SimRank extends RankGraph<SimRank> {
+public class SimRank extends RankGraph {
 
-    protected SimRank(File file, Map<String, ? extends Collection<String>> labelToCitationLabelsMap, double damping) {
-        super(file, labelToCitationLabelsMap, damping);
+    public SimRank(Map<String, ? extends Collection<String>> labelToCitationLabelsMap, double damping) {
+        super(labelToCitationLabelsMap, damping);
     }
 
     protected void init(Map<String, ? extends Collection<String>> labelToCitationLabelsMap) {
@@ -83,7 +83,7 @@ public class SimRank extends RankGraph<SimRank> {
         test.put("n3",Collections.emptyList());
         test.put("n4",Arrays.asList("n1","n2"));
         double damping = 0.75;
-        SimRank pr = new SimRank(new File("test_file.jobj"),test,damping);
+        SimRank pr = new SimRank(test,damping);
         //System.out.println("Similar to n4: "+String.join("; ",pr.findSimilarDocuments(Arrays.asList("n4"),3,4,2)));
     }
 }
