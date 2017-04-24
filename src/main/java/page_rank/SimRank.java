@@ -32,6 +32,10 @@ public class SimRank extends RankGraph {
     }
 
     public List<Pair<String,Float>> findSimilarDocuments(Collection<String> nodeLabels, int limit) {
+        return findSimilarDocumentsFromRankTable(rankTable,nodeLabels,limit);
+    }
+
+    public static List<Pair<String,Float>> findSimilarDocumentsFromRankTable(Map<String,Float> rankTable, Collection<String> nodeLabels, int limit) {
         // greedily iterate through all values and sum ranks over nodelabels
         Map<String,Float> scoreMap = new HashMap<>();
         rankTable.entrySet().stream().filter(e->{
