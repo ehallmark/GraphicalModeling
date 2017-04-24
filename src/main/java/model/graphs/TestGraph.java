@@ -24,7 +24,8 @@ public class TestGraph {
         graph.addFactorNode(new float[]{1,2,2,4},n1,n2);
         graph.addFactorNode(new float[]{7,8,9,10,11,12},n2,n3);
 
-        FactorNode ve = graph.variableElimination(new String[]{"Node 3","Node 2"}, Arrays.asList(new Pair<>("Node 1",1)));
+        graph.setCurrentAssignment( Arrays.asList(new Pair<>("Node 1",1)));
+        FactorNode ve = graph.variableElimination(new String[]{"Node 3","Node 2"});
 
         System.out.println(ve.toString());
     }

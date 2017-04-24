@@ -5,7 +5,6 @@ import lombok.Setter;
 import model.nodes.FactorNode;
 import model.nodes.Node;
 import model.edges.Edge;
-import util.Assignment;
 import util.Pair;
 
 import java.io.Serializable;
@@ -22,8 +21,7 @@ public abstract class Graph implements Serializable {
     protected List<Node> allNodesList;
     protected boolean directed;
     @Getter @Setter
-    protected Assignment currentAssignment;
-    protected Stream<Assignment> dataAssignments;
+    protected List<Pair<String,Integer>> currentAssignment;
 
     public Graph(boolean directed) {
         this.labelToNodeMap=new HashMap<>();
@@ -80,11 +78,13 @@ public abstract class Graph implements Serializable {
         currentAssignment=null;
     }
 
-    public FactorNode variableElimination(String[] queryVars, Assignment varAssignments) {
+    public FactorNode variableElimination(String[] queryVars) {
+        if(currentAssignment==null) throw new RuntimeException("Must set current assignment");
+
         Set<String> queryLabels = new HashSet<>();
         Arrays.stream(queryVars).forEach(var->queryLabels.add(var));
         Set<String> evidenceLabels = new HashSet<>();
-        varAssignments.forEach(a->evidenceLabels.add(a._1));
+        currentAssignment.forEach(a->evidenceLabels.add(a._1));
         // choose elimination ordering
 
 
@@ -95,7 +95,7 @@ public abstract class Graph implements Serializable {
         });
 
         // HOW TO ADD EVIDENCE?
-        varAssignments.forEach(assignment->{
+        currentAssignment.forEach(assignment->{
             Node x = labelToNodeMap.get(assignment._1);
             float[] weights = new float[x.getCardinality()];
             for(int i = 0; i < x.getCardinality(); i++) {
