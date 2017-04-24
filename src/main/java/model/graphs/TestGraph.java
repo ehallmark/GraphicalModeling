@@ -33,10 +33,12 @@ public class TestGraph {
     public static void main(String[] args) throws Exception {
         test2();
 
-        Graph graph = new MarkovNet();
+        Graph graph = new BayesianNet();
         Node n1 = graph.addNode("Node 1",2);
         Node n2 = graph.addNode("Node 2",3);
         Node n3 = graph.addNode("Node 3",10);
+
+        graph=((BayesianNet)graph).moralize();
 
         Edge e12 = graph.connectNodes("Node 1","Node 2");
         Edge e23 = graph.connectNodes(n2,n3);

@@ -64,6 +64,14 @@ public abstract class Graph implements Serializable {
         return factor;
     }
 
+    public List<Node> findNodes(List<String> labels) {
+        List<Node> nodes = new ArrayList<>(labels.size());
+        labels.forEach(label->{
+            nodes.add(findNode(label));
+        });
+        return nodes;
+    }
+
     public Edge connectNodes(String label1, String label2) {
         return connectNodes(labelToNodeMap.get(label1),labelToNodeMap.get(label2));
     }
