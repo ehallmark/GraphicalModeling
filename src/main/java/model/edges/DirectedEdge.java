@@ -15,7 +15,7 @@ public class DirectedEdge extends Edge {
         super(node1,node2);
     }
 
-    // Checks whether connects the same pair of nodes
+    // Checks whether connects the same (directed) pair of nodes
     @Override
     public boolean equals(Object other) {
         if(!(other instanceof UndirectedEdge)) {

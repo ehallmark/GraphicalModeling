@@ -14,6 +14,7 @@ public class UndirectedEdge extends Edge {
     }
 
     // Checks whether connects the same pair of nodes
+    // This checks the String valued labels, so make the sure labels are distinct!
     @Override
     public boolean equals(Object other) {
         if(!(other instanceof UndirectedEdge)) {
