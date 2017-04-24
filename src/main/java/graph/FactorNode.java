@@ -1,5 +1,6 @@
 package graph;
 
+import graph.edges.Edge;
 import lombok.Getter;
 import util.FloatPair;
 

@@ -43,45 +43,54 @@ public class Node {
         this.edgeIndexMap=new HashMap<>();
         this.factors=new ArrayList<>();
         this.factorEdgeIndexMap = new HashMap<>();
-        this.outBound=new ArrayList<>();
-        this.inBound=new ArrayList<>();
         this.directed=directed;
+        this.outBound = new ArrayList<>();
+        this.inBound = new ArrayList<>();
     }
 
-    public Edge connectNode(Node otherNode) {
+    public Edge connectNodes(Node otherNode) {
         Edge edge;
         if(directed) {
             edge = new DirectedEdge(this,otherNode);
         } else {
             edge = new UndirectedEdge(this,otherNode);
         }
-        if (edgeIndexMap.containsKey(edge)) {
-            return edge;
-        } else {
+        addEdgeAndNeighbor(edge,otherNode);
+        otherNode.addEdgeAndNeighbor(edge,this);
+        return edge;
+    }
+
+
+    protected void addEdgeAndNeighbor(Edge edge, Node otherNode) {
+        if (!edgeIndexMap.containsKey(edge)) {
             synchronized (neighbors) {
                 edgeIndexMap.put(edge, neighbors.size());
                 neighbors.add(otherNode);
             }
             if(directed) {
-                outBound.add(otherNode);
-                if(!otherNode.inBound.contains(this))otherNode.inBound.add(this);
+                if(otherNode.equals(edge.getNode2())) {
+                    outBound.add(otherNode);
+                } else {
+                    inBound.add(otherNode);
+                }
             }
-            return edge;
+        }
+    }
+
+    protected void addEdgeAndFactor(Edge edge, FactorNode otherNode) {
+        if (!factorEdgeIndexMap.containsKey(edge)) {
+            synchronized (factors) {
+                factorEdgeIndexMap.put(edge, factors.size());
+                factors.add(otherNode);
+            }
         }
     }
 
     public Edge connectFactor(FactorNode otherFactor) {
         Edge edge = new UndirectedEdge(this, otherFactor);
-        if (factorEdgeIndexMap.containsKey(edge)) {
-            return edge;
-        } else {
-            synchronized (neighbors) {
-                factorEdgeIndexMap.put(edge, factors.size());
-                factors.add(otherFactor);
-
-            }
-            return edge;
-        }
+        addEdgeAndFactor(edge,otherFactor);
+        otherFactor.addEdgeAndNeighbor(edge,this);
+        return edge;
     }
 
     public String getLabel() { return label; }

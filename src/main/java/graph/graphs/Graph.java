@@ -53,7 +53,6 @@ public class Graph {
         FactorNode factor = new FactorNode(weights,connectingLabels,varCardinalities);
         Arrays.stream(connectingNodes).forEach(node->{
             node.connectFactor(factor);
-            factor.connectNode(node);
         });
         factorNodes.add(factor);
         return factor;
@@ -65,8 +64,7 @@ public class Graph {
 
     public Edge connectNodes(Node node1, Node node2) {
         if(node1==null||node2==null) return null;
-        Edge edge = node1.connectNode(node2);
-        if(!directed)node2.connectNode(node1);
+        Edge edge = node1.connectNodes(node2);
         return edge;
     }
 
