@@ -2,9 +2,11 @@ package model.graphs;
 
 import model.edges.Edge;
 import model.heuristics.triangulation.TriangulationHeuristic;
+import model.nodes.CliqueNode;
 import model.nodes.Node;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 /**
@@ -59,6 +61,39 @@ public class MarkovNet extends Graph {
         // maximum cardinality search using perfect ordering
         List<Node> PEO = graph.findPerfectEliminitationOrdering();
         // find maximal clique tree
+        AtomicInteger prevMark = new AtomicInteger(-1);
+        AtomicInteger j = new AtomicInteger(0);
+        Map<Node,Integer> markMap = new HashMap<>();
+        Map<Node,List<Node>> M = new HashMap<>();
+        Map<Node,Integer> C = new HashMap<>();
+        Map<Node,Integer> lastMap = new HashMap<>();
+        CliqueNode Cj = new CliqueNode();
+        graph.allNodesList.forEach(node->markMap.put(node,0));
+        CliqueTree cliqueTree = new CliqueTree();
+        List<CliqueNode> cliqueNodes = new ArrayList<>();
+        PEO.forEach(node->{
+            int markX = markMap.get(node);
+            if(markX<=prevMark.get()) {
+                if(Cj!=null) {
+                    cliqueNodes.add(Cj));
+                }
+                j.getAndIncrement();
+                Cj.clear();
+                Cj.addAll(M.get(node));
+                Cj.add(node);
+                int lastX = lastMap.get(node);
+
+            } else {
+                Cj.add(node);
+            }
+
+
+
+            prevMark.set(markX);
+            C.put(node,j.get());
+        });
+        cliqueNodes.forEach(clique->cliqueTree.addNode(clique));
+        return cliqueTree;
     }
 
     // Make sure the graph is triangulated, or one may not exist!

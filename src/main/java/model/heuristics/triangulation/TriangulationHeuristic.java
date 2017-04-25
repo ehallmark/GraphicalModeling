@@ -8,6 +8,9 @@ import java.util.function.Function;
 
 /**
  * Created by ehallmark on 4/24/17.
+ *
+ * Function that takes a list of nodes and outputs
+ *  the index of the next node to remove
  */
 public interface TriangulationHeuristic {
     Function<List<Node>,Integer> nextNodeToEliminateFunction();
