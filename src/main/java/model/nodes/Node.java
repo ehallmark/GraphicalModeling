@@ -7,10 +7,7 @@ import model.edges.UndirectedEdge;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by ehallmark on 4/13/17.
@@ -45,6 +42,13 @@ public class Node {
         this.directed=directed;
         this.outBound = new ArrayList<>();
         this.inBound = new ArrayList<>();
+    }
+
+    public void removeNeighborConnections() {
+        this.outBound.clear();
+        this.inBound.clear();
+        this.neighbors.clear();
+        this.edgeIndexMap.clear();
     }
 
     public Edge connectNodes(Node otherNode) {

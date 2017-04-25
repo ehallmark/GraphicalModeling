@@ -10,5 +10,5 @@ import java.util.function.Function;
  * Created by ehallmark on 4/24/17.
  */
 public interface TriangulationHeuristic {
-    Function<List<Node>,Node> nextNodeToEliminate(Graph graph);
+    Function<List<Node>,Integer> nextNodeToEliminateFunction();
 }

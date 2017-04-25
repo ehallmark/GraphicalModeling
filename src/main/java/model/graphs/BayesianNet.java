@@ -1,6 +1,8 @@
 package model.graphs;
 
 import model.nodes.Node;
+
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -19,16 +21,19 @@ public class BayesianNet extends Graph {
             newNet.addNode(node.getLabel(),node.getCardinality());
         });
         allNodesList.forEach(node->{
-            node.getInBound().forEach(parent->{
+            List<Node> parents = node.getInBound();
+            for(int i = 0; i < parents.size(); i++) {
                 // connect each parent to node
+                Node parent = parents.get(i);
                 newNet.connectNodes(node,parent);
                 // connect all pairs of parents
-                node.getInBound().forEach(parent2->{
-                    if(!parent.equals(parent2)) {
+                for(int j = 0; j < parents.size(); j++) {
+                    if(i!=j) {
+                        Node parent2 = parents.get(j);
                         newNet.connectNodes(parent.getLabel(),parent2.getLabel());
                     }
-                });
-            });
+                }
+            }
             // factors
             factorNodes.forEach(factor->{
                 newNet.addFactorNode(factor.getWeights(),newNet.findNodes(factor.getNeighbors().stream().map(n->n.getLabel()).collect(Collectors.toList())).toArray(new Node[factor.getNeighbors().size()]));
