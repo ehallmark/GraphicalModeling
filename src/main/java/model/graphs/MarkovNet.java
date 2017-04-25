@@ -7,6 +7,7 @@ import model.nodes.Node;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
@@ -41,7 +42,7 @@ public class MarkovNet extends Graph {
                 }
             }
             // remove node and all links to other nodes
-            copyOfNodes.remove(nodeIdx);
+            copyOfNodes.remove(nodeIdx.intValue());
             node.removeNeighborConnections();
         }
 
@@ -50,7 +51,7 @@ public class MarkovNet extends Graph {
         edges.forEach(edge->{
             connectNodes(edge.getNode1(),edge.getNode2());
         });
-        System.out.println("Completed triangulation");
+        System.out.println("Completed triangulation with: "+edges.size()+" edges");
     }
 
     public CliqueTree createCliqueTree() {
@@ -61,38 +62,51 @@ public class MarkovNet extends Graph {
         // maximum cardinality search using perfect ordering
         List<Node> PEO = graph.findPerfectEliminitationOrdering();
         // find maximal clique tree
+        System.out.println("Constructing clique tree");
         AtomicInteger prevMark = new AtomicInteger(-1);
         AtomicInteger j = new AtomicInteger(0);
         Map<Node,Integer> markMap = new HashMap<>();
-        Map<Node,List<Node>> M = new HashMap<>();
-        Map<Node,Integer> C = new HashMap<>();
-        Map<Node,Integer> lastMap = new HashMap<>();
-        CliqueNode Cj = new CliqueNode();
-        graph.allNodesList.forEach(node->markMap.put(node,0));
+        Map<Node,Set<Node>> M = new HashMap<>();
+        Map<Node,CliqueNode> C = new HashMap<>();
+        Map<Node,Node> lastMap = new HashMap<>();
+        AtomicReference<CliqueNode> CjRef = new AtomicReference<>(new CliqueNode());
+        graph.allNodesList.forEach(node->{
+            markMap.put(node,0);
+            M.put(node,new HashSet<>());
+        });
         CliqueTree cliqueTree = new CliqueTree();
-        List<CliqueNode> cliqueNodes = new ArrayList<>();
+        cliqueTree.addNode(CjRef.get());
+        // Reverse Perfect Elimination Algorithm
+        Collections.reverse(PEO);
+
         PEO.forEach(node->{
+            CliqueNode Cj = CjRef.get();
             int markX = markMap.get(node);
             if(markX<=prevMark.get()) {
-                if(Cj!=null) {
-                    cliqueNodes.add(Cj));
-                }
                 j.getAndIncrement();
-                Cj.clear();
-                Cj.addAll(M.get(node));
-                Cj.add(node);
-                int lastX = lastMap.get(node);
-
+                System.out.println("Adding clique tree: "+j.get());
+                // create clique
+                Cj = new CliqueNode(new ArrayList<>(M.get(node)));
+                CjRef.set(Cj);
+                Cj.addNode(node);
+                // add node to graph
+                cliqueTree.addNode(Cj);
+                // create link
+                Node lastNode = lastMap.get(node);
+                cliqueTree.connectNodes(Cj,C.get(lastNode));
             } else {
-                Cj.add(node);
+                Cj.addNode(node);
             }
 
-
+            node.getNeighbors().forEach(neighbor->{
+                M.get(neighbor).add(node);
+                markMap.put(neighbor,markMap.get(neighbor)+1);
+                lastMap.put(neighbor,node);
+            });
 
             prevMark.set(markX);
-            C.put(node,j.get());
+            C.put(node,Cj);
         });
-        cliqueNodes.forEach(clique->cliqueTree.addNode(clique));
         return cliqueTree;
     }
 
@@ -131,6 +145,11 @@ public class MarkovNet extends Graph {
                     if(set.contains(neighbor)) {
                         // if set S has not been replaced while processing this node
                         newSet.add(neighbor);
+                        set.remove(neighbor);
+                        if(set.isEmpty()) {
+                            setSequence.remove(s);
+                            break;
+                        }
                         // move w from S to T
                         remainingNeighbors.remove(i);
                     } else {
@@ -145,8 +164,6 @@ public class MarkovNet extends Graph {
                 }
                 s++;
             }
-            // if S is empty, remove S from sequence
-            setSequence.removeIf(set->set.isEmpty());
         }
 
         System.out.println("Found perfect elimination ordering");

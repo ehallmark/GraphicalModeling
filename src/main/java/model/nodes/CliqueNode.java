@@ -20,6 +20,11 @@ public class CliqueNode extends Node {
     }
 
     public void addNode(Node node) {
-        this.nodes.add(node);
+        if(!this.nodes.contains(node))this.nodes.add(node);
+        cardinality=this.nodes.size();
+    }
+
+    public int size() {
+        return cardinality;
     }
 }

@@ -5,7 +5,6 @@ import model.edges.DirectedEdge;
 import model.edges.Edge;
 import model.edges.UndirectedEdge;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.*;
 
@@ -24,7 +23,7 @@ public class Node {
     @Getter
     protected final String label;
     @Getter
-    protected final int cardinality;
+    protected int cardinality;
     protected final Map<Edge,Integer> edgeIndexMap;
     protected final Map<Edge,Integer> factorEdgeIndexMap;
     @Getter
