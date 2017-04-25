@@ -94,9 +94,6 @@ public class Node {
         return edge;
     }
 
-    public String getLabel() { return label; }
-
-
     @Override
     public int hashCode() {
         return (label==null)? super.hashCode():label.hashCode();
