@@ -51,8 +51,15 @@ public class MarkovNet extends Graph {
         System.out.println("Completed triangulation");
     }
 
+    public CliqueTree createCliqueTree() {
+        return createCliqueTree(this);
+    }
 
-    public MarkovNet createCliqueTree() { return null; }
+    public static CliqueTree createCliqueTree(MarkovNet graph) {
+        // maximum cardinality search using perfect ordering
+        List<Node> PEO = graph.findPerfectEliminitationOrdering();
+        // find maximal clique tree
+    }
 
     // Make sure the graph is triangulated, or one may not exist!
     List<Node> findPerfectEliminitationOrdering() {
