@@ -20,8 +20,9 @@ public class MarkovNet extends Graph {
     }
 
     // Returns triangulated (chordal) version of this graph
+    //  based on given triangulation heuristic
     public void triangulateInPlace(TriangulationHeuristic heuristic) {
-        System.out.println("Starting triangulation with heuristic: "+heuristic.getClass().getName());
+        System.out.println("Starting triangulation");
         List<Node> copyOfNodes = new ArrayList<>(allNodesList);
         Set<Edge> edges = new HashSet<>(allNodesList.size());
         Function<List<Node>,Integer> function = heuristic.nextNodeToEliminateFunction();
@@ -43,6 +44,7 @@ public class MarkovNet extends Graph {
             }
             // remove node and all links to other nodes
             copyOfNodes.remove(nodeIdx.intValue());
+            // this method removes the correct connections
             node.removeNeighborConnections();
         }
 
