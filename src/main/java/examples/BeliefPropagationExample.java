@@ -75,6 +75,7 @@ public class BeliefPropagationExample {
          **/
 
         // Run Belief Propagation
+        cliqueTree.runBeliefPropagation();
 
     }
 }

@@ -32,6 +32,16 @@ public class CliqueNode extends Node {
         cardinality=this.nodes.size();
     }
 
+    // Incorporate incoming child messages and return resulting message to parent (1st pass)
+    public float[] receiveMessagesFromChildren(List<float[]> messages) {
+        return null;
+    }
+
+    // Send messages downstream (2nd pass)
+    public void sendMessagesToChildren() {
+
+    }
+
     public boolean hasFactorScope(String[] varLabels) {
         return Arrays.stream(varLabels).allMatch(label->nameSet.contains(label));
     }

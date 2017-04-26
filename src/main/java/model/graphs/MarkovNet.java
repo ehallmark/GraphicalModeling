@@ -102,7 +102,7 @@ public class MarkovNet extends Graph {
                 cliqueTree.addNode(Cj);
                 // create link
                 Node lastNode = lastMap.get(node);
-                cliqueTree.connectNodes(Cj,C.get(lastNode));
+                cliqueTree.connectNodes(C.get(lastNode),Cj);
             } else {
                 Cj.addNode(node);
             }

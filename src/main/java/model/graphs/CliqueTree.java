@@ -8,11 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Created by Evan on 4/25/2017.
  */
 public class CliqueTree extends BayesianNet {
+    protected CliqueNode root;
     public CliqueNode addNode(CliqueNode node) {
         allNodesList.add(node);
         return node;
@@ -61,7 +63,27 @@ public class CliqueTree extends BayesianNet {
         return sj.toString();
     }
 
-    public void runBeliefPropagation() {
+    // Recursive
+    protected float[] accumulateMessagesTo(CliqueNode root) {
+        return root.receiveMessagesFromChildren(root.getChildren().stream().map(child->accumulateMessagesTo((CliqueNode)child)).collect(Collectors.toList()));
+    }
 
+    // Recursive
+    protected void propagateMessagesFrom(CliqueNode root) {
+        root.sendMessagesToChildren();
+        root.getChildren().forEach(child->{
+            propagateMessagesFrom((CliqueNode)child);
+        });
+    }
+
+    public void runBeliefPropagation() {
+        // select root
+        Node root = allNodesList.stream().filter(n->n.getInBound().isEmpty()).findFirst().get();
+        if(root==null) throw new RuntimeException("No root found");
+        // pass messages inwards starting from the leaves
+        accumulateMessagesTo((CliqueNode)root);
+
+        // second message passing starting from root
+        propagateMessagesFrom((CliqueNode)root);
     }
 }
