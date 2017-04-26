@@ -61,4 +61,7 @@ public class CliqueTree extends BayesianNet {
         return sj.toString();
     }
 
+    public void runBeliefPropagation() {
+
+    }
 }
