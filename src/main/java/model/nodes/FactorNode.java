@@ -2,6 +2,7 @@ package model.nodes;
 
 import lombok.Getter;
 import lombok.Setter;
+import model.functions.normalization.NormalizationFunction;
 import util.FloatFloatPair;
 
 import java.util.*;
@@ -163,8 +164,8 @@ public class FactorNode extends Node {
         if(numAssignments!=weights.length) throw new RuntimeException("Invalid factor dimensions");
     }
 
-    public void reNormalize(Function<float[],float[]> f) {
-        weights=f.apply(weights);
+    public void reNormalize(NormalizationFunction f) {
+        weights=f.getFunction().apply(weights);
     }
 
     public int strideFor(String varLabel) {
@@ -234,7 +235,7 @@ public class FactorNode extends Node {
 
     @Override
     public String toString() {
-        return "Name: "+label+"\n"+"Scope: "+Arrays.toString(varLabels)+"\n"+
-                "Factors: "+Arrays.toString(weights);
+        return "Scope: "+Arrays.toString(varLabels)+"\n"+
+                "Factor: "+Arrays.toString(weights);
     }
 }

@@ -2,6 +2,9 @@ package model.graphs;
 
 import lombok.Getter;
 import lombok.Setter;
+import model.functions.normalization.DivideByPartition;
+import model.functions.normalization.NormalizationFunction;
+import model.functions.normalization.SoftMax;
 import model.learning_algorithms.LearningAlgorithm;
 import model.nodes.FactorNode;
 import model.nodes.Node;
@@ -91,7 +94,15 @@ public abstract class Graph implements Serializable {
         currentAssignment=null;
     }
 
-    public FactorNode variableElimination(String[] queryVars) {
+    public FactorNode variableEliminationDefault(String[] queryVars) {
+        return variableElimination(queryVars,new DivideByPartition());
+    }
+
+    public FactorNode variableEliminationLogistic(String[] queryVars) {
+        return variableElimination(queryVars,new SoftMax());
+    }
+
+    public FactorNode variableElimination(String[] queryVars, NormalizationFunction normalizationFunction) {
         if(currentAssignment==null) throw new RuntimeException("Must set current assignment");
 
         Set<String> queryLabels = new HashSet<>();
@@ -133,15 +144,8 @@ public abstract class Graph implements Serializable {
         FactorNode query = F.get().remove(0);
         while(!F.get().isEmpty()) query = query.multiply(F.get().remove(0));
 
-        float sum = query.sumOut(query.getVarLabels()).getWeights()[0];
-
         // normalize
-        query.reNormalize(x->{
-            for(int i = 0; i < x.length; i++) {
-                x[i]=x[i]/sum;
-            }
-            return x;
-        });
+        query.reNormalize(normalizationFunction);
 
         return query;
     }

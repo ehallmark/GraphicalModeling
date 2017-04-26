@@ -1,4 +1,4 @@
-package model.heuristics.triangulation;
+package model.functions.heuristic;
 
 import model.nodes.Node;
 

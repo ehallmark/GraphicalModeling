@@ -25,7 +25,7 @@ public class TestGraph {
         graph.addFactorNode(new float[]{7,8,9,10,11,12},n2,n3);
 
         graph.setCurrentAssignment( Arrays.asList(new Pair<>("Node 1",1)));
-        FactorNode ve = graph.variableElimination(new String[]{"Node 3","Node 2"});
+        FactorNode ve = graph.variableEliminationDefault(new String[]{"Node 3","Node 2"});
 
         graph.triangulateInPlace(()->(List<Node> list)->0);
 

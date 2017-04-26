@@ -2,7 +2,7 @@ package model.graphs;
 
 import model.edges.Edge;
 import model.edges.UndirectedEdge;
-import model.heuristics.triangulation.TriangulationHeuristic;
+import model.functions.heuristic.TriangulationHeuristic;
 import model.nodes.CliqueNode;
 import model.nodes.Node;
 
@@ -94,7 +94,6 @@ public class MarkovNet extends Graph {
             int markX = markMap.get(node);
             if(markX<=prevMark.get()) {
                 j.getAndIncrement();
-                System.out.println("Adding clique tree "+j.get()+" with nodes: "+String.join("; ",Cj.getNameSet()));
                 // create clique
                 Cj = new CliqueNode(new ArrayList<>(M.get(node)));
                 CjRef.set(Cj);
@@ -122,7 +121,7 @@ public class MarkovNet extends Graph {
         // Build the factors
         cliqueTree.factorNodes=new ArrayList<>(graph.factorNodes);
         cliqueTree.constructFactors();
-        System.out.println("Completed Clique Tree");
+        System.out.println("Completed Clique tree with: "+cliqueTree.allNodesList.size() + " cliques");
 
         return cliqueTree;
     }
