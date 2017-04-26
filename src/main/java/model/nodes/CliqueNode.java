@@ -11,7 +11,7 @@ public class CliqueNode extends Node {
     protected Collection<Node> nodes;
 
     public CliqueNode(Collection<Node> nodes) {
-        super(null, nodes.size(), false);
+        super(null, nodes.size());
         this.nodes=nodes;
     }
 

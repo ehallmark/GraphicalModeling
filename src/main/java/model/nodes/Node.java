@@ -1,9 +1,5 @@
 package model.nodes;
 
-
-import model.edges.DirectedEdge;
-import model.edges.Edge;
-import model.edges.UndirectedEdge;
 import lombok.Getter;
 
 import java.util.*;
@@ -24,74 +20,78 @@ public class Node {
     protected final String label;
     @Getter
     protected int cardinality;
-    protected final Map<Edge,Integer> edgeIndexMap;
-    protected final Map<Edge,Integer> factorEdgeIndexMap;
-    @Getter
-    protected boolean directed;
 
     // Null means not assigned
 
-    public Node(String label, int cardinality, boolean directed) {
+    public Node(String label, int cardinality) {
         this.label=label;
         this.neighbors=new ArrayList<>();
         this.cardinality=cardinality;
-        this.edgeIndexMap=new HashMap<>();
         this.factors=new ArrayList<>();
-        this.factorEdgeIndexMap = new HashMap<>();
-        this.directed=directed;
         this.outBound = new ArrayList<>();
         this.inBound = new ArrayList<>();
     }
 
     public void removeNeighborConnections() {
+        neighbors.forEach(n->n.removeNeighbor(this));
+        outBound.forEach(n->n.removeParent(this));
+        inBound.forEach(n->n.removeChild(this));
         this.outBound.clear();
         this.inBound.clear();
         this.neighbors.clear();
-        this.edgeIndexMap.clear();
     }
 
-    public Edge connectNodes(Node otherNode) {
-        Edge edge;
-        if(directed) {
-            edge = new DirectedEdge(this,otherNode);
-        } else {
-            edge = new UndirectedEdge(this,otherNode);
-        }
-        addEdgeAndNeighbor(edge,otherNode);
-        otherNode.addEdgeAndNeighbor(edge,this);
-        return edge;
+    public List<Node> getParents() {
+        return inBound;
     }
 
-    protected void addEdgeAndNeighbor(Edge edge, Node otherNode) {
-        if (!edgeIndexMap.containsKey(edge)) {
-            synchronized (neighbors) {
-                edgeIndexMap.put(edge, neighbors.size());
-                neighbors.add(otherNode);
-            }
-            if(directed) {
-                if(otherNode.equals(edge.getNode2())) {
-                    outBound.add(otherNode);
-                } else {
-                    inBound.add(otherNode);
-                }
-            }
+    public List<Node> getChildren() {
+        return outBound;
+    }
+
+    public void removeNeighbor(Node neighbor) {
+        int idx = neighbors.indexOf(neighbor);
+        if(idx>=0) {
+            neighbors.remove(idx);
         }
     }
 
-    protected void addEdgeAndFactor(Edge edge, FactorNode otherNode) {
-        if (!factorEdgeIndexMap.containsKey(edge)) {
-            synchronized (factors) {
-                factorEdgeIndexMap.put(edge, factors.size());
-                factors.add(otherNode);
-            }
+    public void removeChild(Node neighbor) {
+        int idx = outBound.indexOf(neighbor);
+        if(idx>=0) {
+            outBound.remove(idx);
         }
     }
 
-    public Edge connectFactor(FactorNode otherFactor) {
-        Edge edge = new UndirectedEdge(this, otherFactor);
-        addEdgeAndFactor(edge,otherFactor);
-        otherFactor.addEdgeAndNeighbor(edge,this);
-        return edge;
+    public void removeParent(Node neighbor) {
+        int idx = inBound.indexOf(neighbor);
+        if(idx>=0) {
+            inBound.remove(idx);
+        }
+    }
+
+    public void addNeighbor(Node neighbor) {
+        if(!neighbors.contains(neighbor)) {
+            neighbors.add(neighbor);
+        }
+    }
+
+    public void addParent(Node neighbor) {
+        if(!inBound.contains(neighbor)) {
+            inBound.add(neighbor);
+        }
+    }
+
+    public void addChild(Node neighbor) {
+        if(!outBound.contains(neighbor)) {
+            outBound.add(neighbor);
+        }
+    }
+
+    public void addFactor(FactorNode otherFactor) {
+        if(!factors.contains(otherFactor)) {
+            factors.add(otherFactor);
+        }
     }
 
     @Override

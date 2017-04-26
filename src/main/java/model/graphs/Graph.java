@@ -60,7 +60,7 @@ public abstract class Graph implements Serializable {
         }
         FactorNode factor = new FactorNode(weights,connectingLabels,varCardinalities);
         Arrays.stream(connectingNodes).forEach(node->{
-            node.connectFactor(factor);
+            node.addFactor(factor);
         });
         factorNodes.add(factor);
         return factor;
@@ -82,14 +82,19 @@ public abstract class Graph implements Serializable {
         }
     }
 
-    public Edge connectNodes(String label1, String label2) {
-        return connectNodes(labelToNodeMap.get(label1),labelToNodeMap.get(label2));
+    public void connectNodes(String label1, String label2) {
+        connectNodes(labelToNodeMap.get(label1),labelToNodeMap.get(label2));
     }
 
-    public Edge connectNodes(Node node1, Node node2) {
-        if(node1==null||node2==null) return null;
-        Edge edge = node1.connectNodes(node2);
-        return edge;
+    public void connectNodes(Node node1, Node node2) {
+        if(node1==null||node2==null) return;
+        if(directed) {
+            node1.addChild(node2);
+            node2.addParent(node1);
+        } else {
+            node1.addNeighbor(node2);
+            node2.addNeighbor(node1);
+        }
     }
 
     public void removeCurrentAssignment() {
