@@ -10,9 +10,11 @@ import java.util.function.Function;
  */
 public class MinimalCliqueSizeHeuristic implements TriangulationHeuristic {
     @Override
+    //TODO
     public Function<List<Node>, Integer> nextNodeToEliminateFunction() {
         return (nodes)-> {
-            return null;
+            Node node = nodes.stream().reduce((n1,n2)->n1.getNeighbors().size()<n2.getNeighbors().size()?n1:n2).get();
+            return nodes.indexOf(node);
         };
     }
 }

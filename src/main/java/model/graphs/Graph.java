@@ -18,18 +18,16 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class Graph implements Serializable {
     protected Map<String, Node> labelToNodeMap;
     @Getter
-    protected Set<FactorNode> factorNodes;
+    protected List<FactorNode> factorNodes;
     @Getter
     protected List<Node> allNodesList;
-    protected boolean directed;
     @Getter @Setter
     protected List<Pair<String,Integer>> currentAssignment;
 
-    public Graph(boolean directed) {
+    public Graph() {
         this.labelToNodeMap=new HashMap<>();
         this.allNodesList=new ArrayList<>();
-        this.factorNodes=new HashSet<>();
-        this.directed=directed;
+        this.factorNodes=new ArrayList<>();
     }
 
     public Node addBinaryNode(String label) { // default binary
@@ -42,7 +40,7 @@ public abstract class Graph implements Serializable {
 
     public Node addNode(String label, int cardinality) {
         if(labelToNodeMap.containsKey(label)) return labelToNodeMap.get(label);
-        Node node = new Node(label,cardinality,directed);
+        Node node = new Node(label,cardinality);
         allNodesList.add(node);
         labelToNodeMap.put(label, node);
         return node;
@@ -59,19 +57,20 @@ public abstract class Graph implements Serializable {
             varCardinalities[i] = node.getCardinality();
         }
         FactorNode factor = new FactorNode(weights,connectingLabels,varCardinalities);
-        Arrays.stream(connectingNodes).forEach(node->{
+        for(int i = 0; i < connectingNodes.length; i++) {
+            Node node = connectingNodes[i];
             node.addFactor(factor);
-        });
+        }
         factorNodes.add(factor);
         return factor;
     }
 
-    public List<Node> findNodes(List<String> labels) {
-        List<Node> nodes = new ArrayList<>(labels.size());
-        labels.forEach(label->{
-            nodes.add(findNode(label));
-        });
-        return nodes;
+    public Node[] findNodes(String... labels) {
+        Node[] toReturn = new Node[labels.length];
+        for(int i = 0; i < toReturn.length; i++) {
+            toReturn[i]=findNode(labels[i]);
+        }
+        return toReturn;
     }
 
     public void applyLearningAlgorithm(LearningAlgorithm function, int epochs) {
@@ -86,16 +85,7 @@ public abstract class Graph implements Serializable {
         connectNodes(labelToNodeMap.get(label1),labelToNodeMap.get(label2));
     }
 
-    public void connectNodes(Node node1, Node node2) {
-        if(node1==null||node2==null) return;
-        if(directed) {
-            node1.addChild(node2);
-            node2.addParent(node1);
-        } else {
-            node1.addNeighbor(node2);
-            node2.addNeighbor(node1);
-        }
-    }
+    public abstract void connectNodes(Node node1, Node node2);
 
     public void removeCurrentAssignment() {
         currentAssignment=null;

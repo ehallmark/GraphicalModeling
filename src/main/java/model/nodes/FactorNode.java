@@ -30,21 +30,13 @@ public class FactorNode extends Node {
 
     // 1 dimension array // if null then unnamed
     public FactorNode(float[] weights, String[] varLabels, int[] cardinalities) {
-        super(null,0,false);
+        super(null,varLabels.length);
         if(varLabels.length!=cardinalities.length) throw new RuntimeException("varLabels and Cardinalities must have same size");
         this.varLabels=varLabels;
         this.cardinalities=cardinalities;
         this.weights=weights;
         this.numVariables=cardinalities.length;
         this.init();
-    }
-
-    public int cardinalityFor(String varName) {
-        Integer c = cardinalityMap.get(varName);
-
-        if(c==null || c < 0) return 0;
-
-        return c;
     }
 
     public FactorNode sumOut(String[] toSumOver) {

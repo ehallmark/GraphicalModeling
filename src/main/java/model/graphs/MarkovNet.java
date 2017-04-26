@@ -1,6 +1,7 @@
 package model.graphs;
 
 import model.edges.Edge;
+import model.edges.UndirectedEdge;
 import model.heuristics.triangulation.TriangulationHeuristic;
 import model.nodes.CliqueNode;
 import model.nodes.Node;
@@ -16,7 +17,13 @@ import java.util.function.Function;
 public class MarkovNet extends Graph {
     // undirected graph
     public MarkovNet() {
-        super(false);
+        super();
+    }
+
+    public void connectNodes(Node node1, Node node2) {
+        if(node1==null||node2==null) return;
+        node1.addNeighbor(node2);
+        node2.addNeighbor(node1);
     }
 
     // Returns triangulated (chordal) version of this graph
@@ -34,12 +41,11 @@ public class MarkovNet extends Graph {
             for(int i = 0; i < neighbors.size(); i++) {
                 // add edge for easy reconstruction
                 Node n1 = neighbors.get(i);
-                edges.add(connectNodes(node,n1));
-                for(int j = 0; j < neighbors.size(); j++) {
-                    if(i!=j) {
-                        Node n2 = neighbors.get(j);
-                        edges.add(n1.connectNodes(n2));
-                    }
+                edges.add(new UndirectedEdge(node,n1));
+                for(int j = i+1; j < neighbors.size(); j++) {
+                    Node n2 = neighbors.get(j);
+                    connectNodes(n1,n2);
+                    edges.add(new UndirectedEdge(n1,n2));
                 }
             }
             // remove node and all links to other nodes
@@ -63,6 +69,9 @@ public class MarkovNet extends Graph {
     public static CliqueTree createCliqueTree(MarkovNet graph) {
         // maximum cardinality search using perfect ordering
         List<Node> PEO = graph.findPerfectEliminitationOrdering();
+        // Reverse Perfect Elimination Algorithm
+        Collections.reverse(PEO);
+
         // find maximal clique tree
         System.out.println("Constructing clique tree");
         AtomicInteger prevMark = new AtomicInteger(-1);
@@ -78,15 +87,14 @@ public class MarkovNet extends Graph {
         });
         CliqueTree cliqueTree = new CliqueTree();
         cliqueTree.addNode(CjRef.get());
-        // Reverse Perfect Elimination Algorithm
-        Collections.reverse(PEO);
+
 
         PEO.forEach(node->{
             CliqueNode Cj = CjRef.get();
             int markX = markMap.get(node);
             if(markX<=prevMark.get()) {
                 j.getAndIncrement();
-                System.out.println("Adding clique tree: "+j.get());
+                System.out.println("Adding clique tree "+j.get()+" with nodes: "+String.join("; ",Cj.getNameSet()));
                 // create clique
                 Cj = new CliqueNode(new ArrayList<>(M.get(node)));
                 CjRef.set(Cj);
@@ -109,11 +117,18 @@ public class MarkovNet extends Graph {
             prevMark.set(markX);
             C.put(node,Cj);
         });
+
+        System.out.println("Building factors");
+        // Build the factors
+        cliqueTree.factorNodes=new ArrayList<>(graph.factorNodes);
+        cliqueTree.constructFactors();
+        System.out.println("Completed Clique Tree");
+
         return cliqueTree;
     }
 
     // Make sure the graph is triangulated, or one may not exist!
-    List<Node> findPerfectEliminitationOrdering() {
+    public List<Node> findPerfectEliminitationOrdering() {
         System.out.println("Starting to find perfect elimination ordering");
         // sequence of sigmas
         List<Set<Node>> setSequence = new LinkedList<>();
@@ -121,6 +136,7 @@ public class MarkovNet extends Graph {
         List<Node> outputSequence = new LinkedList<>();
         // initial set of sequence
         setSequence.add(new HashSet<>(allNodesList));
+        System.out.print("Order:");
         while(!setSequence.isEmpty()) {
             // find and remove a node from the set sequence
             Set<Node> firstSet = setSequence.get(0);
@@ -132,7 +148,7 @@ public class MarkovNet extends Graph {
 
             // add node to the end of output
             outputSequence.add(0, node);
-            System.out.println("Adding node: "+node.getLabel());
+            System.out.print(" "+node.getLabel());
 
             // for each neighbor of node that exists in one of the sequence sets S
             List<Node> remainingNeighbors = new LinkedList<>(node.getNeighbors());
@@ -167,7 +183,7 @@ public class MarkovNet extends Graph {
                 s++;
             }
         }
-
+        System.out.println();
         System.out.println("Found perfect elimination ordering");
         return outputSequence;
     }
