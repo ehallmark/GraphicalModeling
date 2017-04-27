@@ -64,8 +64,12 @@ public class CliqueTree extends BayesianNet {
     }
 
     // Recursive
-    protected float[] accumulateMessagesTo(CliqueNode root) {
-        return root.receiveMessagesFromChildren(root.getChildren().stream().map(child->accumulateMessagesTo((CliqueNode)child)).collect(Collectors.toList()));
+    protected FactorNode accumulateMessagesTo(CliqueNode root) {
+        if(root.getChildren().isEmpty()) {
+            // leaf
+            return root.sendMessagesToParent();
+        }
+        else root.getChildren().stream().map(child->accumulateMessagesTo((CliqueNode)child)).collect(Collectors.toList());
     }
 
     // Recursive

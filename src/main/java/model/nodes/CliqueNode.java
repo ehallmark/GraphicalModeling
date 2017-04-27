@@ -32,14 +32,31 @@ public class CliqueNode extends Node {
         cardinality=this.nodes.size();
     }
 
-    // Incorporate incoming child messages and return resulting message to parent (1st pass)
-    public float[] receiveMessagesFromChildren(List<float[]> messages) {
+    // Incorporate incoming messages
+    public float[] receiveMessages(List<float[]> messages) {
         return null;
+    }
+
+    // Send messages upstream (1st pass)
+    public void sendMessagesToParent() {
+        if(this.getParents().size()>1) throw new RuntimeException("Invalid tree");
+        this.getParents().forEach(parent->{
+            float[] message = prepMessageFor(parent);
+            ((CliqueNode)parent).receiveMessages(Arrays.asList(message));
+        });
     }
 
     // Send messages downstream (2nd pass)
     public void sendMessagesToChildren() {
+        this.getChildren().forEach(child->{
+            float[] message = prepMessageFor(child);
+            ((CliqueNode)child).receiveMessages(Arrays.asList(message));
+        });
+    }
 
+    //
+    public float[] prepMessageFor(Node otherNode) {
+        return null;
     }
 
     public boolean hasFactorScope(String[] varLabels) {
