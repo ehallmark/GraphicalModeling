@@ -48,9 +48,6 @@ public class BeliefPropagationExample {
         // Triangulate with given heuristic
         markovNet.triangulateInPlace(new MinimalCliqueSizeHeuristic());
 
-        // Find Perfect Elimination Ordering
-        List<Node> PEO = markovNet.findPerfectEliminitationOrdering();
-
         // Create Clique Tree From Triangulated Graph
         CliqueTree cliqueTree = markovNet.createCliqueTree();
 
