@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  * Created by ehallmark on 4/20/17.
  */
 public class SimRank extends RankGraph {
-    private static final int jaccardDepth = 5;
+    private static final int jaccardDepth = 4;
     public SimRank(Map<String, ? extends Collection<String>> labelToCitationLabelsMap, double damping) {
         super(labelToCitationLabelsMap, damping);
     }
@@ -24,7 +24,9 @@ public class SimRank extends RankGraph {
     protected void initGraph(Map<String, ? extends Collection<String>> labelToCitationLabelsMap) {
         this.rankTable=new HashMap<>();
         System.out.println("Adding initial nodes...");
-        labelToCitationLabelsMap.forEach((label,citations)->{
+        labelToCitationLabelsMap.entrySet().parallelStream().forEach(e->{
+            String label = e.getKey();
+            Collection<String> citations = e.getValue();
             graph.addBinaryNode(label);
             citations.forEach(citation->{
                 graph.addBinaryNode(citation);
@@ -33,7 +35,7 @@ public class SimRank extends RankGraph {
         });
         this.nodes=graph.getAllNodesList();
         AtomicInteger cnt = new AtomicInteger(0);
-        this.nodes.forEach(node->{
+        this.nodes.parallelStream().forEach(node->{
             System.out.println("Adding neighbors of: "+cnt.getAndIncrement());
            addNeighborsToMap(node,node,0,jaccardDepth);
         });
@@ -43,9 +45,11 @@ public class SimRank extends RankGraph {
     protected void addNeighborsToMap(Node thisNode, Node otherNode, int currentIdx, int maxIdx) {
         rankTable.put(new Pair<>(thisNode.getLabel(),otherNode.getLabel()).toString(),thisNode.getLabel().equals(otherNode.getLabel())?1f:0f);
         if(currentIdx<maxIdx) {
-            thisNode.getInBound().forEach(neighbor->{
+            otherNode.getInBound().forEach(neighbor->{
+                System.out.print("-");
                 addNeighborsToMap(thisNode,neighbor,currentIdx+1,maxIdx);
             });
+            System.out.println();
         }
     }
 
