@@ -43,7 +43,7 @@ public class SimRank extends RankGraph {
     protected void addNeighborsToMap(Node thisNode, Node otherNode, int currentIdx, int maxIdx) {
         rankTable.put(new Pair<>(thisNode.getLabel(),otherNode.getLabel()).toString(),thisNode.getLabel().equals(otherNode.getLabel())?1f:0f);
         if(currentIdx<maxIdx) {
-            thisNode.getNeighbors().forEach(neighbor->{
+            thisNode.getInBound().forEach(neighbor->{
                 addNeighborsToMap(thisNode,neighbor,currentIdx+1,maxIdx);
             });
         }
