@@ -95,8 +95,8 @@ public class SimRank extends RankGraph {
         public Function<Graph, Graph> runAlgorithm() {
             return (graph) -> {
                 AtomicInteger cnt = new AtomicInteger(0);
-                Map<String,Float> rankTableCopy = new HashMap<>(rankTable);
-                rankTableCopy.forEach((pair,oldRank)->{
+                Collection<String> rankTableKeysCopy = new HashSet<>(rankTable.keySet());
+                rankTableKeysCopy.parallelStream().forEach(pair->{
                     String[] split = pair.split(";");
                     if(split.length!=2) throw new RuntimeException("Unknown error happened!");
                     Node n1 = graph.findNode(split[0]);
