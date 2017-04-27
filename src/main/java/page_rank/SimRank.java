@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
  * Created by ehallmark on 4/20/17.
  */
 public class SimRank extends RankGraph {
+    private static final int jaccardDepth = 5;
     public SimRank(Map<String, ? extends Collection<String>> labelToCitationLabelsMap, double damping) {
         super(labelToCitationLabelsMap, damping);
     }
@@ -25,14 +26,27 @@ public class SimRank extends RankGraph {
         System.out.println("Adding initial nodes...");
         labelToCitationLabelsMap.forEach((label,citations)->{
             graph.addBinaryNode(label);
-            rankTable.put(new Pair<>(label,label).toString(),1f);
             citations.forEach(citation->{
                 graph.addBinaryNode(citation);
                 graph.connectNodes(label, citation);
             });
         });
         this.nodes=graph.getAllNodesList();
+        AtomicInteger cnt = new AtomicInteger(0);
+        this.nodes.forEach(node->{
+            System.out.println("Adding neighbors of: "+cnt.getAndIncrement());
+           addNeighborsToMap(node,node,0,jaccardDepth);
+        });
         System.out.println("Done.");
+    }
+
+    protected void addNeighborsToMap(Node thisNode, Node otherNode, int currentIdx, int maxIdx) {
+        rankTable.put(new Pair<>(thisNode.getLabel(),otherNode.getLabel()).toString(),thisNode.getLabel().equals(otherNode.getLabel())?1f:0f);
+        if(currentIdx<maxIdx) {
+            thisNode.getNeighbors().forEach(neighbor->{
+                addNeighborsToMap(thisNode,neighbor,currentIdx+1,maxIdx);
+            });
+        }
     }
 
     @Override
@@ -81,14 +95,19 @@ public class SimRank extends RankGraph {
         public Function<Graph, Graph> runAlgorithm() {
             return (graph) -> {
                 AtomicInteger cnt = new AtomicInteger(0);
-                nodes.parallelStream().forEach(n1->nodes.parallelStream().forEach(n2->{
-                    double rank = rankValue(n1,n2);
+                Map<String,Float> rankTableCopy = new HashMap<>(rankTable);
+                rankTableCopy.forEach((pair,oldRank)->{
+                    String[] split = pair.split(";");
+                    if(split.length!=2) throw new RuntimeException("Unknown error happened!");
+                    Node n1 = graph.findNode(split[0]);
+                    Node n2 = graph.findNode(split[1]);
+                    double newRank = rankValue(n1,n2);
                     cnt.getAndIncrement();
-                    if(rank>0) {
-                        System.out.println("Adding to TABLE: Point: "+cnt.get()+", Rank: "+rank);
-                        rankTable.put(new Pair<>(n1.getLabel(),n2.getLabel()).toString(),(float)rank);
+                    if(newRank>0) {
+                        System.out.println("Adding to TABLE: Point: "+cnt.get()+", Rank: "+newRank);
+                        rankTable.put(new Pair<>(n1.getLabel(),n2.getLabel()).toString(),(float)newRank);
                     }
-                }));
+                });
                 return graph;
             };
         }
