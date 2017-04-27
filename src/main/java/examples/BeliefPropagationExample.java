@@ -60,22 +60,14 @@ public class BeliefPropagationExample {
         });
 
         System.out.println("Clique Tree: "+cliqueTree.toString());
-        /**
-             Clique Tree: Num factors: 3
-             Num nodes: 3
-             Clique: 0
-             Scope: [Node 3, Node 2, Node 4]
-             Factor: [0.04310345, 0.094827585, 0.10344828, 0.21674877, 0.05541872, 0.12931034, 0.11083744, 0.24630542]
-             Clique: 1
-             Scope: [Node 3, Node 5, Node 6]
-             Factor: [0.1904762, 0.14285715, 0.1904762, 0.0952381, 0.0952381, 0.071428575, 0.14285715, 0.071428575]
-             Clique: 2
-             Scope: [Node 1, Node 2]
-             Factor: [0.1, 0.2, 0.3, 0.4]
-         **/
 
         // Run Belief Propagation
         cliqueTree.runBeliefPropagation();
+
+        // Re-Normalize Values to Probabilities
+        cliqueTree.reNormalize(new DivideByPartition());
+
+        System.out.println("Clique Tree (after BP): "+cliqueTree.toString());
 
     }
 }

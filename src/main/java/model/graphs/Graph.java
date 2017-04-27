@@ -6,6 +6,7 @@ import model.functions.normalization.DivideByPartition;
 import model.functions.normalization.NormalizationFunction;
 import model.functions.normalization.SoftMax;
 import model.learning_algorithms.LearningAlgorithm;
+import model.nodes.CliqueNode;
 import model.nodes.FactorNode;
 import model.nodes.Node;
 import model.edges.Edge;
@@ -47,6 +48,12 @@ public abstract class Graph implements Serializable {
         allNodesList.add(node);
         labelToNodeMap.put(label, node);
         return node;
+    }
+
+    public void reNormalize(NormalizationFunction function) {
+        factorNodes.forEach(node->{
+            node.reNormalize(function);
+        });
     }
 
     public FactorNode addFactorNode(float[] weights, Node... connectingNodes) {
@@ -94,16 +101,9 @@ public abstract class Graph implements Serializable {
         currentAssignment=null;
     }
 
-    public FactorNode variableEliminationDefault(String[] queryVars) {
-        return variableElimination(queryVars,new DivideByPartition());
-    }
-
-    public FactorNode variableEliminationLogistic(String[] queryVars) {
-        return variableElimination(queryVars,new SoftMax());
-    }
-
-    public FactorNode variableElimination(String[] queryVars, NormalizationFunction normalizationFunction) {
+    public FactorNode variableElimination(String[] queryVars) {
         if(currentAssignment==null) throw new RuntimeException("Must set current assignment");
+        if(queryVars==null||queryVars.length==0) throw new RuntimeException("Must set queryVars");
 
         Set<String> queryLabels = new HashSet<>();
         Arrays.stream(queryVars).forEach(var->queryLabels.add(var));
@@ -143,9 +143,6 @@ public abstract class Graph implements Serializable {
         // multiply to get query
         FactorNode query = F.get().remove(0);
         while(!F.get().isEmpty()) query = query.multiply(F.get().remove(0));
-
-        // normalize
-        query.reNormalize(normalizationFunction);
 
         return query;
     }

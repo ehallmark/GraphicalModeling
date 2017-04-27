@@ -1,8 +1,10 @@
 package model.nodes;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -12,12 +14,18 @@ public class CliqueNode extends Node {
     protected Collection<Node> nodes;
     @Getter
     protected Set<String> nameSet;
+    protected Map<String,FactorNode> incomingMessageMap;
+    @Getter @Setter
+    protected FactorNode cliqueFactor;
 
     public CliqueNode(Collection<Node> nodes) {
         super(null,nodes.size());
         this.nodes=nodes;
         this.nameSet=new HashSet<>();
+        this.incomingMessageMap=new HashMap<>();
         nodes.forEach(node->nameSet.add(node.getLabel()));
+        // For Clique nodes use the CliqueFactor, which insures the has one relationship
+        this.factors=Collections.unmodifiableList(Collections.EMPTY_LIST);
     }
 
     public CliqueNode() {
@@ -32,31 +40,60 @@ public class CliqueNode extends Node {
         cardinality=this.nodes.size();
     }
 
+    @Override
+    public void addFactor(FactorNode factor) {
+        throw new UnsupportedOperationException("Use setCliqueFactor instead.");
+    }
+
     // Incorporate incoming messages
-    public float[] receiveMessages(List<float[]> messages) {
-        return null;
+    protected void receiveMessage(FactorNode message, Node sendingNode) {
+        incomingMessageMap.put(sendingNode.getLabel(),message);
+    }
+
+    public void incorporateMessagesIntoFactor() {
+        AtomicReference<FactorNode> factorRef = new AtomicReference<>(cliqueFactor);
+        incomingMessageMap.forEach((senderLabel,message)->{
+            factorRef.set(factorRef.get().multiply(message));
+        });
+        cliqueFactor=factorRef.get();
+        //incomingMessageMap.clear(); // Don't need them anymore?
     }
 
     // Send messages upstream (1st pass)
-    public void sendMessagesToParent() {
+    public void prepAndSendMessageToParent() {
         if(this.getParents().size()>1) throw new RuntimeException("Invalid tree");
         this.getParents().forEach(parent->{
-            float[] message = prepMessageFor(parent);
-            ((CliqueNode)parent).receiveMessages(Arrays.asList(message));
+            FactorNode message = getMessageFor((CliqueNode)parent);
+            ((CliqueNode)parent).receiveMessage(message,this);
         });
     }
 
     // Send messages downstream (2nd pass)
-    public void sendMessagesToChildren() {
+    public void prepAndSendMessagesToChildren() {
         this.getChildren().forEach(child->{
-            float[] message = prepMessageFor(child);
-            ((CliqueNode)child).receiveMessages(Arrays.asList(message));
+            FactorNode message = getMessageFor((CliqueNode)child);
+            ((CliqueNode)child).receiveMessage(message,this);
         });
     }
 
-    //
-    public float[] prepMessageFor(Node otherNode) {
-        return null;
+    // Gets the message to be passed from this -> other
+    public FactorNode getMessageFor(CliqueNode otherNode) {
+        AtomicReference<FactorNode> newFactorRef = new AtomicReference<>(cliqueFactor);
+        incomingMessageMap.forEach((senderLabel,message)->{
+            if(!otherNode.getLabel().equals(senderLabel)) {
+                newFactorRef.set(newFactorRef.get().multiply(message));
+            }
+        });
+        // need to sum out variables
+        FactorNode newFactor = newFactorRef.get();
+
+        List<String> toSumOver = new ArrayList<>();
+        nameSet.forEach(label->{
+            if(!otherNode.getNameSet().contains(label)) toSumOver.add(label);
+        });
+
+        FactorNode result = newFactor.sumOut(toSumOver.toArray(new String[toSumOver.size()]));
+        return result;
     }
 
     public boolean hasFactorScope(String[] varLabels) {

@@ -3,11 +3,13 @@ package model.nodes;
 import lombok.Getter;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by ehallmark on 4/13/17.
  */
 public class Node {
+    protected static AtomicLong idCounter = new AtomicLong(0);
     @Getter
     protected final List<Node> neighbors;
     @Getter
@@ -15,7 +17,7 @@ public class Node {
     @Getter
     protected final List<Node> outBound;
     @Getter
-    protected final List<FactorNode> factors;
+    protected List<FactorNode> factors;
     @Getter
     protected final String label;
     @Getter
@@ -24,7 +26,7 @@ public class Node {
     // Null means not assigned
 
     public Node(String label, int cardinality) {
-        this.label=label;
+        this.label=label==null?"UNLABELED-"+idCounter.getAndIncrement():label;
         this.neighbors=new ArrayList<>();
         this.cardinality=cardinality;
         this.factors=new ArrayList<>();
