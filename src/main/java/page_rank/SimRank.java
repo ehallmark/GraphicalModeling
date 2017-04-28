@@ -3,7 +3,7 @@ package page_rank;
 import model.edges.Edge;
 import model.edges.UndirectedEdge;
 import model.graphs.Graph;
-import model.learning_algorithms.LearningAlgorithm;
+import model.learning.algorithms.LearningAlgorithm;
 import model.nodes.Node;
 import util.Pair;
 

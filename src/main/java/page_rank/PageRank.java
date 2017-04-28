@@ -1,7 +1,7 @@
 package page_rank;
 
 import model.graphs.Graph;
-import model.learning_algorithms.LearningAlgorithm;
+import model.learning.algorithms.LearningAlgorithm;
 import model.nodes.Node;
 
 import java.util.*;

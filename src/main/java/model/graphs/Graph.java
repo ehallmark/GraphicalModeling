@@ -2,14 +2,10 @@ package model.graphs;
 
 import lombok.Getter;
 import lombok.Setter;
-import model.functions.normalization.DivideByPartition;
 import model.functions.normalization.NormalizationFunction;
-import model.functions.normalization.SoftMax;
-import model.learning_algorithms.LearningAlgorithm;
-import model.nodes.CliqueNode;
+import model.learning.algorithms.LearningAlgorithm;
 import model.nodes.FactorNode;
 import model.nodes.Node;
-import model.edges.Edge;
 import util.Pair;
 
 import java.io.Serializable;

@@ -1,4 +1,4 @@
-package model.learning_algorithms;
+package model.learning.algorithms;
 
 import model.graphs.Graph;
 
