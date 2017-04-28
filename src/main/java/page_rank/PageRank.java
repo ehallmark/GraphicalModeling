@@ -4,17 +4,14 @@ import model.graphs.Graph;
 import model.learning_algorithms.LearningAlgorithm;
 import model.nodes.Node;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * Created by ehallmark on 4/21/17.
  */
-public class PageRank extends RankGraph {
+public class PageRank extends RankGraph<String> {
     public PageRank(Map<String, ? extends Collection<String>> labelToCitationLabelsMap, double damping) {
         super(labelToCitationLabelsMap, damping);
     }
@@ -36,7 +33,7 @@ public class PageRank extends RankGraph {
 
     @Override
     protected void initGraph(Map<String, ? extends Collection<String>> labelToCitationLabelsMap) {
-        this.rankTable=new HashMap<>();
+        rankTable=new HashMap<>();
         System.out.println("Adding initial nodes...");
         labelToCitationLabelsMap.forEach((label,citations)->{
             graph.addBinaryNode(label);
@@ -45,8 +42,8 @@ public class PageRank extends RankGraph {
                 graph.connectNodes(label, citation);
             });
         });
-        this.nodes=graph.getAllNodesList();
-        this.nodes.forEach(node->{
+        nodes=graph.getAllNodesList();
+        nodes.forEach(node->{
             rankTable.put(node.getLabel(),1f/nodes.size());
         });
         System.out.println("Done.");
@@ -55,7 +52,7 @@ public class PageRank extends RankGraph {
 
     public class Algorithm implements LearningAlgorithm {
         @Override
-        public Function<Graph, Graph> runAlgorithm() {
+        public Function<Graph, Void> runAlgorithm() {
             return (graph) -> {
                 nodes.parallelStream().forEach(node -> {
                     double rank = rankValue(node);
@@ -63,7 +60,7 @@ public class PageRank extends RankGraph {
                         rankTable.put(node.getLabel(), (float) rank);
                     }
                 });
-                return graph;
+                return null;
             };
         }
 
@@ -71,5 +68,17 @@ public class PageRank extends RankGraph {
         public Function<Graph, Double> computeCurrentScore() {
             return (graph)->0d;
         }
+    }
+
+    public static void main(String[] args) throws Exception {
+        Map<String,Collection<String>> test = new HashMap<>();
+        test.put("n1", Arrays.asList("n2","n3"));
+        test.put("n2",Arrays.asList("n1"));
+        test.put("n3", Collections.emptyList());
+        test.put("n4",Arrays.asList("n1","n2"));
+        double damping = 0.75;
+        PageRank pr = new PageRank(test,damping);
+        pr.solve(10);
+        //System.out.println("Similar to n4: "+String.join("; ",pr.findSimilarDocuments(Arrays.asList("n4"),3,4,2)));
     }
 }

@@ -8,6 +8,6 @@ import java.util.function.Function;
  * Created by Evan on 4/24/2017.
  */
 public interface LearningAlgorithm {
-    Function<Graph,Graph> runAlgorithm();
+    Function<Graph,Void> runAlgorithm();
     Function<Graph,Double> computeCurrentScore();
 }
