@@ -27,6 +27,7 @@ public class FactorNode extends Node {
     protected float[] weights;
     @Getter
     protected Map<String,Integer> varToIndexMap;
+    @Getter
     protected int numAssignments;
 
     // 1 dimension array // if null then unnamed
@@ -38,6 +39,14 @@ public class FactorNode extends Node {
         this.weights=weights;
         this.numVariables=cardinalities.length;
         this.init();
+    }
+
+    public void incrementAtIndex(int idx) {
+        if(idx>=0&&idx<weights.length) {
+            weights[idx]++;
+        } else {
+            throw new RuntimeException("Idx does not exist");
+        }
     }
 
     public FactorNode sumOut(String[] toSumOver) {
@@ -161,7 +170,7 @@ public class FactorNode extends Node {
             varToIndexMap.put(varLabels[i],i);
             numAssignments*=cardinalities[i];
         }
-        if(numAssignments!=weights.length) throw new RuntimeException("Invalid factor dimensions");
+        if(weights!=null && numAssignments!=weights.length) throw new RuntimeException("Invalid factor dimensions");
     }
 
     public void reNormalize(NormalizationFunction f) {

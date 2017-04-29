@@ -11,6 +11,7 @@ import util.Pair;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 /**
  * Created by Evan on 4/13/2017.
@@ -23,6 +24,8 @@ public abstract class Graph implements Serializable {
     protected List<Node> allNodesList;
     @Getter @Setter
     protected List<Pair<String,Integer>> currentAssignment;
+    @Getter @Setter
+    protected Collection<Map<String,int[]>> assignments;
 
     public Graph() {
         this.labelToNodeMap=new HashMap<>();

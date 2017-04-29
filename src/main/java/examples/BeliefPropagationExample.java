@@ -6,9 +6,12 @@ import model.graphs.BayesianNet;
 import model.graphs.CliqueTree;
 import model.graphs.MarkovNet;
 import model.functions.heuristic.MinimalCliqueSizeHeuristic;
+import model.learning.algorithms.TrainingAlgorithm;
+import model.learning.distributions.Dirichlet;
+import model.learning.distributions.DirichletCreator;
 import model.nodes.Node;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by ehallmark on 4/26/17.
@@ -20,9 +23,9 @@ public class BeliefPropagationExample {
 
         // Add nodes
         Node n1 = bayesianNet.addNode("Node 1",2);
-        Node n2 = bayesianNet.addNode("Node 2",2);
+        Node n2 = bayesianNet.addNode("Node 2",3);
         Node n3 = bayesianNet.addNode("Node 3",2);
-        Node n4 = bayesianNet.addNode("Node 4",2);
+        Node n4 = bayesianNet.addNode("Node 4",5);
         Node n5 = bayesianNet.addBinaryNode("Node 5"); // Shorthand
         Node n6 = bayesianNet.addBinaryNode("Node 6"); // Shorthand
 
@@ -34,6 +37,8 @@ public class BeliefPropagationExample {
         bayesianNet.connectNodes("Node 3","Node 5");
         bayesianNet.connectNodes(n6,n5); // Or by variable
 
+
+        /*
         // Add factors
         bayesianNet.addFactorNode(new float[]{1,2,3,4},n1,n2);
         bayesianNet.addFactorNode(new float[]{5,6,7,8},n2,n3);
@@ -41,6 +46,37 @@ public class BeliefPropagationExample {
         bayesianNet.addFactorNode(new float[]{7,11,3,5},n3,n4);
         bayesianNet.addFactorNode(new float[]{4,3,2,1},n3,n5);
         bayesianNet.addFactorNode(new float[]{6,3,12,9},n6,n5);
+        */
+
+        bayesianNet.addFactorNode(null,n1,n2);
+        bayesianNet.addFactorNode(null,n2,n3);
+        bayesianNet.addFactorNode(null,n2,n4);
+        bayesianNet.addFactorNode(null,n3,n4);
+        bayesianNet.addFactorNode(null,n3,n5);
+        bayesianNet.addFactorNode(null,n6,n5);
+        bayesianNet.addFactorNode(null,n1);
+
+        Random rand = new Random(69);
+        List<Map<String,int[]>> assignments = new ArrayList<>();
+        Map<String,int[]> assignment = new HashMap<>();
+        for(int i = 0; i < 1000; i++) {
+            if(i%10!=0) {
+                for(Node node : bayesianNet.getAllNodesList()) {
+                    assignment.get(node.getLabel())[(i%10)-1]=rand.nextInt(node.getCardinality());
+                }
+            } else {
+                if(assignment.size()>0)assignments.add(assignment);
+                assignment=new HashMap<>();
+                for(Node node : bayesianNet.getAllNodesList()) {
+                    assignment.put(node.getLabel(),new int[9]);
+                }
+            }
+
+        }
+
+        bayesianNet.setAssignments(assignments);
+
+        bayesianNet.applyLearningAlgorithm(new TrainingAlgorithm(new DirichletCreator(5000f),9),1);
 
         // Moralize to a Markov Network
         MarkovNet markovNet = bayesianNet.moralize();
