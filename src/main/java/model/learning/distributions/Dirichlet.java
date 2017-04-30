@@ -27,7 +27,6 @@ public class Dirichlet implements Distribution {
 
     @Override
     public void train(Map<String,int[]> assignmentMap, int batchSize) {
-        System.out.println("Starting batch");
         INDArray assignments = Nd4j.create(factor.getNumVariables(),batchSize);
         factor.getVarToIndexMap().forEach((var,idx)->{
             int[] varAssignments = assignmentMap.get(var);
@@ -46,7 +45,6 @@ public class Dirichlet implements Distribution {
             int idx = factor.assignmentToIndex(assignment);
             factor.incrementAtIndex(idx);
         }
-        factor.reNormalize(new DivideByPartition());
     }
 
     @Override

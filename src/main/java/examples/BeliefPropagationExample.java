@@ -23,9 +23,9 @@ public class BeliefPropagationExample {
 
         // Add nodes
         Node n1 = bayesianNet.addNode("Node 1",2);
-        Node n2 = bayesianNet.addNode("Node 2",3);
+        Node n2 = bayesianNet.addNode("Node 2",2);
         Node n3 = bayesianNet.addNode("Node 3",2);
-        Node n4 = bayesianNet.addNode("Node 4",5);
+        Node n4 = bayesianNet.addNode("Node 4",2);
         Node n5 = bayesianNet.addBinaryNode("Node 5"); // Shorthand
         Node n6 = bayesianNet.addBinaryNode("Node 6"); // Shorthand
 
@@ -76,7 +76,7 @@ public class BeliefPropagationExample {
 
         bayesianNet.setAssignments(assignments);
 
-        bayesianNet.applyLearningAlgorithm(new TrainingAlgorithm(new DirichletCreator(5000f),9),1);
+        bayesianNet.applyLearningAlgorithm(new TrainingAlgorithm(new DirichletCreator(50f),9),1);
 
         // Moralize to a Markov Network
         MarkovNet markovNet = bayesianNet.moralize();
