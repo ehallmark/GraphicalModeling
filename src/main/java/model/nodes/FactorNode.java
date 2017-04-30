@@ -3,7 +3,7 @@ package model.nodes;
 import lombok.Getter;
 import lombok.Setter;
 import model.functions.normalization.NormalizationFunction;
-import util.FloatFloatPair;
+import util.DoubleDoublePair;
 
 import java.util.*;
 import java.util.function.Function;
@@ -24,14 +24,14 @@ public class FactorNode extends Node {
     @Getter
     protected String[] varLabels;
     @Getter @Setter
-    protected float[] weights;
+    protected double[] weights;
     @Getter
     protected Map<String,Integer> varToIndexMap;
     @Getter
     protected int numAssignments;
 
     // 1 dimension array // if null then unnamed
-    public FactorNode(float[] weights, String[] varLabels, int[] cardinalities) {
+    public FactorNode(double[] weights, String[] varLabels, int[] cardinalities) {
         super(null,varLabels.length);
         if(varLabels.length!=cardinalities.length) throw new RuntimeException("varLabels and Cardinalities must have same size");
         this.varLabels=varLabels;
@@ -70,7 +70,7 @@ public class FactorNode extends Node {
         }
         int numAssignmentsTotal = numAssignmentCombinations(newCardinalities);
         int[] newStrides = computeStrides(newCardinalities,newLabels.length);
-        float[] psi = new float[numAssignmentsTotal];
+        double[] psi = new double[numAssignmentsTotal];
         List<String> Zs = new ArrayList<>(Zset);
         Set<Integer> indicesToSumOver = new HashSet<>();
         for(int i = 0; i < Zs.size(); i++) {
@@ -115,7 +115,7 @@ public class FactorNode extends Node {
         return applyFunction(other,(pair->pair._2==0?0:pair._1/pair._2));
     }
 
-    public FactorNode applyFunction(FactorNode other, Function<FloatFloatPair,Float> f) {
+    public FactorNode applyFunction(FactorNode other, Function<DoubleDoublePair,Double> f) {
         // Get the union of X1 and X2
         String[] unionLabels = labelUnion(other);
         int unionSize = unionLabels.length;
@@ -139,9 +139,9 @@ public class FactorNode extends Node {
         }
 
         int numAssignmentsTotal = numAssignmentCombinations(unionCardinalities);
-        float[] psi = new float[numAssignmentsTotal];
+        double[] psi = new double[numAssignmentsTotal];
         for( int i = 0; i < numAssignmentsTotal; i++) {
-            psi[i] = f.apply(new FloatFloatPair(weights[j],other.weights[k]));
+            psi[i] = f.apply(new DoubleDoublePair(weights[j],other.weights[k]));
             for(int l = 0; l < unionSize; l++) {
                 assignments[l]++;
                 if(assignments[l]==unionCardinalities[l]) {

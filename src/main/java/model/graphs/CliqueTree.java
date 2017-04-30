@@ -1,5 +1,6 @@
 package model.graphs;
 
+import model.functions.normalization.DivideByPartition;
 import model.nodes.CliqueNode;
 import model.nodes.FactorNode;
 import model.nodes.Node;
@@ -75,7 +76,7 @@ public class CliqueTree extends BayesianNet {
 
         // incorporate any messages
         root.incorporateMessagesIntoFactor();
-
+        root.getCliqueFactor().reNormalize(new DivideByPartition());
         // send next messages
         root.prepAndSendMessageToParent();
     }
@@ -84,6 +85,7 @@ public class CliqueTree extends BayesianNet {
     protected void propagateMessagesFrom(CliqueNode root) {
         // incorporate any messages
         root.incorporateMessagesIntoFactor();
+        root.getCliqueFactor().reNormalize(new DivideByPartition());
 
         // send next messages
         root.prepAndSendMessagesToChildren();

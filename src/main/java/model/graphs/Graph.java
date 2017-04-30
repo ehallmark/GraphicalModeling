@@ -59,7 +59,7 @@ public abstract class Graph implements Serializable {
         });
     }
 
-    public FactorNode addFactorNode(float[] weights, Node... connectingNodes) {
+    public FactorNode addFactorNode(double[] weights, Node... connectingNodes) {
         String[] connectingLabels = new String[connectingNodes.length];
         int[] varCardinalities = new int[connectingNodes.length];
         for(int i = 0; i < connectingNodes.length; i++) {
@@ -145,7 +145,7 @@ public abstract class Graph implements Serializable {
     }
 
     public static FactorNode givenValueFactor(Node node, int val) {
-        float[] weights = new float[node.getCardinality()];
+        double[] weights = new double[node.getCardinality()];
         Arrays.fill(weights,0f);
         weights[val]=1f;
         return new FactorNode(weights,new String[]{node.getLabel()},new int[]{node.getCardinality()});

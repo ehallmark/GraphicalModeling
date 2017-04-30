@@ -18,9 +18,9 @@ import java.util.stream.Stream;
  * Created by ehallmark on 4/28/17.
  */
 public class Dirichlet implements Distribution {
-    protected float alpha;
+    protected double alpha;
     protected FactorNode factor;
-    public Dirichlet(FactorNode factor, float alpha) {
+    public Dirichlet(FactorNode factor, double alpha) {
         this.alpha=alpha;
         this.factor=factor;
     }
@@ -49,7 +49,7 @@ public class Dirichlet implements Distribution {
 
     @Override
     public void initializeWeights() {
-        float[] newWeights = new float[factor.getNumAssignments()];
+        double[] newWeights = new double[factor.getNumAssignments()];
         Arrays.fill(newWeights,alpha);
         factor.setWeights(newWeights);
     }

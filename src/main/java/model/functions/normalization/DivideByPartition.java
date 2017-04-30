@@ -9,9 +9,9 @@ import java.util.function.Function;
  */
 public class DivideByPartition implements NormalizationFunction {
 
-    public Function<float[],float[]> getFunction() {
+    public Function<double[],double[]> getFunction() {
         return (x)->{
-            float sum = MathHelper.sum(x);
+            double sum = MathHelper.sum(x);
             for(int i = 0; i < x.length; i++) {
                 x[i]=x[i]/sum;
             }

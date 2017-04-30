@@ -6,8 +6,8 @@ import model.nodes.FactorNode;
  * Created by Evan on 4/29/2017.
  */
 public class DirichletCreator implements DistributionCreator {
-    protected float alpha;
-    public DirichletCreator(float alpha) {
+    protected double alpha;
+    public DirichletCreator(double alpha) {
         this.alpha=alpha;
     }
     @Override
