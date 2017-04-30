@@ -1,6 +1,7 @@
 package model.nodes;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -22,6 +23,9 @@ public class Node {
     protected final String label;
     @Getter
     protected int cardinality;
+    @Setter
+    protected Map<String,Integer> currentAssignmentMap;
+
 
     // Null means not assigned
 

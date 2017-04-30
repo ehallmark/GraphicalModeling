@@ -25,7 +25,11 @@ public abstract class Graph implements Serializable {
     @Getter @Setter
     protected List<Pair<String,Integer>> currentAssignment;
     @Getter @Setter
-    protected Collection<Map<String,int[]>> assignments;
+    protected Collection<Map<String,int[]>> trainingData;
+    @Getter @Setter
+    protected Collection<Map<String,int[]>> validationData;
+    @Getter @Setter
+    protected Collection<Map<String,int[]>> testData;
 
     public Graph() {
         this.labelToNodeMap=new HashMap<>();
@@ -122,15 +126,7 @@ public abstract class Graph implements Serializable {
         // HOW TO ADD EVIDENCE?
         currentAssignment.forEach(assignment->{
             Node x = labelToNodeMap.get(assignment._1);
-            float[] weights = new float[x.getCardinality()];
-            for(int i = 0; i < x.getCardinality(); i++) {
-                if(assignment._2.equals(i)) {
-                    weights[i]=1f;
-                } else {
-                    weights[i]=0f;
-                }
-            }
-            F.get().add(new FactorNode(weights,new String[]{x.getLabel()},new int[]{x.getCardinality()}));
+            F.get().add(givenValueFactor(x,assignment._2));
         });
 
         for(Node z : allNodesList) {
@@ -146,6 +142,13 @@ public abstract class Graph implements Serializable {
         while(!F.get().isEmpty()) query = query.multiply(F.get().remove(0));
 
         return query;
+    }
+
+    public static FactorNode givenValueFactor(Node node, int val) {
+        float[] weights = new float[node.getCardinality()];
+        Arrays.fill(weights,0f);
+        weights[val]=1f;
+        return new FactorNode(weights,new String[]{node.getLabel()},new int[]{node.getCardinality()});
     }
 
     protected List<FactorNode> sumProductVariableElimination(List<FactorNode> F, Node x) {

@@ -29,8 +29,8 @@ public class TrainingAlgorithm implements LearningAlgorithm {
                     distributions.add(creator.create(factor));
                 });
             }
-            System.out.println("Num Assignments: "+graph.getAssignments().size());
-            graph.getAssignments().forEach(assignment->{
+            System.out.println("Num Assignments: "+graph.getTrainingData().size());
+            graph.getTrainingData().forEach(assignment->{
                 distributions.forEach(distribution -> {
                     distribution.train(assignment,batchSize);
                 });

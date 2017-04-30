@@ -74,7 +74,7 @@ public class BeliefPropagationExample {
 
         }
 
-        bayesianNet.setAssignments(assignments);
+        bayesianNet.setTrainingData(assignments);
 
         bayesianNet.applyLearningAlgorithm(new TrainingAlgorithm(new DirichletCreator(50f),9),1);
 
