@@ -50,7 +50,15 @@ public class CliqueTree extends BayesianNet {
                 clique.setCliqueFactor(endFactor);
             }
         });
-        if(factorNodes.size()>0) throw new RuntimeException("Could not include every factor!");
+        if(factorNodes.size()>0) {
+            for(FactorNode factor : factorNodes) {
+                CliqueNode cliqueNode = new CliqueNode(factor.getNeighbors());
+                cliqueNode.setCliqueFactor(factor);
+                allNodesList.add(cliqueNode);
+            }
+            //throw new RuntimeException("Could not include every factor!");
+            System.out.println("WARNING: Could not include every factor!");
+        }
         this.factorNodes=new CliqueFactorList(allNodesList);
     }
 
