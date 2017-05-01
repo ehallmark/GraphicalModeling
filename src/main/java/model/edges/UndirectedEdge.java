@@ -8,6 +8,7 @@ import java.util.Objects;
  * Created by ehallmark on 4/13/17.
  */
 public class UndirectedEdge extends Edge {
+    private static final long serialVersionUID = 1l;
 
     public UndirectedEdge(Node node1, Node node2) {
         super(node1,node2);

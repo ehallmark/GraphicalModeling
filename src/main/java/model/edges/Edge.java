@@ -2,10 +2,13 @@ package model.edges;
 
 import model.nodes.Node;
 
+import java.io.Serializable;
+
 /**
  * Created by Evan on 4/23/2017.
  */
-public abstract class Edge {
+public abstract class Edge implements Serializable {
+    private static final long serialVersionUID = 1l;
     protected Node node1;
     protected Node node2;
     protected Edge(Node node1, Node node2) {

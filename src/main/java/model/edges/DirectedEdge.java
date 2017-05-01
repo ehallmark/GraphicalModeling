@@ -8,6 +8,8 @@ import java.util.Objects;
  * Created by Evan on 4/23/2017.
  */
 public class DirectedEdge extends Edge {
+    private static final long serialVersionUID = 1l;
+
     protected Node node1;
     protected Node node2;
 
