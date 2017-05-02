@@ -3,13 +3,15 @@ package model.nodes;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by ehallmark on 4/13/17.
  */
-public class Node {
+public class Node implements Serializable {
+    private static final long serialVersionUID = 1l;
     protected static AtomicLong idCounter = new AtomicLong(0);
     @Getter
     protected final List<Node> neighbors;
@@ -24,7 +26,7 @@ public class Node {
     @Getter
     protected int cardinality;
     @Setter
-    protected Map<String,Integer> currentAssignmentMap;
+    transient protected Map<String,Integer> currentAssignmentMap;
 
 
     // Null means not assigned

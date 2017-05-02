@@ -12,10 +12,11 @@ import java.util.stream.Collectors;
  * Created by ehallmark on 4/25/17.
  */
 public class CliqueNode extends Node {
+    private static final long serialVersionUID = 1l;
     protected Collection<Node> nodes;
     @Getter
     protected Set<String> nameSet;
-    protected Map<String,FactorNode> incomingMessageMap;
+    transient protected Map<String,FactorNode> incomingMessageMap;
     @Getter @Setter
     protected FactorNode cliqueFactor;
 

@@ -13,6 +13,7 @@ import java.util.stream.Stream;
  * Created by Evan on 4/13/2017.
  */
 public class FactorNode extends Node {
+    private static final long serialVersionUID = 1l;
     @Getter
     protected int[] strides;
     @Getter
