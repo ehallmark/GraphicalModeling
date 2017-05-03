@@ -7,27 +7,24 @@ import java.util.Objects;
 /**
  * Created by Evan on 4/23/2017.
  */
-public class DirectedEdge extends Edge {
+public class DirectedEdge<T> extends Edge<T> {
     private static final long serialVersionUID = 1l;
 
-    protected Node node1;
-    protected Node node2;
-
-    public DirectedEdge(Node node1, Node node2) {
+    public DirectedEdge(T node1, T node2) {
         super(node1,node2);
     }
 
     // Checks whether connects the same (directed) pair of nodes
     @Override
     public boolean equals(Object other) {
-        if(!(other instanceof UndirectedEdge)) {
+        if(!(other instanceof Edge)) {
             return false;
         }
 
-        UndirectedEdge otherEdge = (UndirectedEdge)other;
+        Edge otherEdge = (Edge)other;
 
-        Node otherNode1 = otherEdge.getNode1();
-        Node otherNode2 = otherEdge.getNode2();
+        Object otherNode1 = otherEdge.getNode1();
+        Object otherNode2 = otherEdge.getNode2();
 
         if(node1.equals(otherNode1)&&node2.equals(otherNode2)) {
             return true;

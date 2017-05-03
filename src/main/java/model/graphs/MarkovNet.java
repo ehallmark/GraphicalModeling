@@ -31,7 +31,7 @@ public class MarkovNet extends Graph {
     public void triangulateInPlace(TriangulationHeuristic heuristic) {
         System.out.println("Starting triangulation");
         List<Node> copyOfNodes = new ArrayList<>(allNodesList);
-        Set<Edge> edges = new HashSet<>(allNodesList.size());
+        Set<Edge<Node>> edges = new HashSet<>(allNodesList.size());
         Function<List<Node>,Integer> function = heuristic.nextNodeToEliminateFunction();
         while(!copyOfNodes.isEmpty()) {
             Integer nodeIdx = function.apply(copyOfNodes);
@@ -41,11 +41,11 @@ public class MarkovNet extends Graph {
             for(int i = 0; i < neighbors.size(); i++) {
                 // add edge for easy reconstruction
                 Node n1 = neighbors.get(i);
-                edges.add(new UndirectedEdge(node,n1));
+                edges.add(new UndirectedEdge<>(node,n1));
                 for(int j = i+1; j < neighbors.size(); j++) {
                     Node n2 = neighbors.get(j);
                     connectNodes(n1,n2);
-                    edges.add(new UndirectedEdge(n1,n2));
+                    edges.add(new UndirectedEdge<>(n1,n2));
                 }
             }
             // remove node and all links to other nodes

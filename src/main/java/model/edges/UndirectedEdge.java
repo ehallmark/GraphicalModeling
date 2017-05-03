@@ -7,10 +7,10 @@ import java.util.Objects;
 /**
  * Created by ehallmark on 4/13/17.
  */
-public class UndirectedEdge extends Edge {
+public class UndirectedEdge<T> extends Edge<T> {
     private static final long serialVersionUID = 1l;
 
-    public UndirectedEdge(Node node1, Node node2) {
+    public UndirectedEdge(T node1, T node2) {
         super(node1,node2);
     }
 
@@ -18,14 +18,14 @@ public class UndirectedEdge extends Edge {
     // This checks the String valued labels, so make the sure labels are distinct!
     @Override
     public boolean equals(Object other) {
-        if(!(other instanceof UndirectedEdge)) {
+        if(!(other instanceof Edge)) {
             return false;
         }
 
-        UndirectedEdge otherEdge = (UndirectedEdge)other;
+        Edge otherEdge = (Edge)other;
 
-        Node otherNode1 = otherEdge.getNode1();
-        Node otherNode2 = otherEdge.getNode2();
+        Object otherNode1 = otherEdge.getNode1();
+        Object otherNode2 = otherEdge.getNode2();
 
         if(node1.equals(otherNode1)&&node2.equals(otherNode2)) {
             return true;
