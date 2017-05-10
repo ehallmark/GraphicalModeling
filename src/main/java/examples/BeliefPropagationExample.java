@@ -1,13 +1,12 @@
 package examples;
 
 import model.functions.normalization.DivideByPartition;
-import model.functions.normalization.SoftMax;
 import model.graphs.BayesianNet;
 import model.graphs.CliqueTree;
 import model.graphs.MarkovNet;
 import model.functions.heuristic.MinimalCliqueSizeHeuristic;
-import model.learning.algorithms.TrainingAlgorithm;
-import model.learning.distributions.Dirichlet;
+import model.learning.algorithms.BayesianLearningAlgorithm;
+import model.learning.algorithms.ExpectationMaximizationAlgorithm;
 import model.learning.distributions.DirichletCreator;
 import model.nodes.Node;
 
@@ -39,7 +38,7 @@ public class BeliefPropagationExample {
 
 
         /*
-        // Add factors
+        // Add known factors
         bayesianNet.addFactorNode(new float[]{1,2,3,4},n1,n2);
         bayesianNet.addFactorNode(new float[]{5,6,7,8},n2,n3);
         bayesianNet.addFactorNode(new float[]{1,2,3,5},n2,n4);
@@ -48,6 +47,7 @@ public class BeliefPropagationExample {
         bayesianNet.addFactorNode(new float[]{6,3,12,9},n6,n5);
         */
 
+        // Add factors to learn
         bayesianNet.addFactorNode(null,n1,n2);
         bayesianNet.addFactorNode(null,n2,n3);
         bayesianNet.addFactorNode(null,n2,n4);
@@ -57,26 +57,26 @@ public class BeliefPropagationExample {
         bayesianNet.addFactorNode(null,n1);
 
         Random rand = new Random(69);
-        List<Map<String,int[]>> assignments = new ArrayList<>();
-        Map<String,int[]> assignment = new HashMap<>();
+        List<Map<String,Integer>> assignments = new ArrayList<>();
+        Map<String,Integer> assignment = new HashMap<>();
         for(int i = 0; i < 1000; i++) {
             if(i%10!=0) {
                 for(Node node : bayesianNet.getAllNodesList()) {
-                    assignment.get(node.getLabel())[(i%10)-1]=rand.nextInt(node.getCardinality());
+                    // randomly don't include some
+                    if(rand.nextBoolean()&&rand.nextBoolean()) {
+                        assignment.put(node.getLabel(),rand.nextInt(node.getCardinality()));
+                    }
                 }
             } else {
                 if(assignment.size()>0)assignments.add(assignment);
                 assignment=new HashMap<>();
-                for(Node node : bayesianNet.getAllNodesList()) {
-                    assignment.put(node.getLabel(),new int[9]);
-                }
             }
 
         }
 
         bayesianNet.setTrainingData(assignments);
 
-        bayesianNet.applyLearningAlgorithm(new TrainingAlgorithm(new DirichletCreator(50f),9),1);
+        bayesianNet.applyLearningAlgorithm(new ExpectationMaximizationAlgorithm(new DirichletCreator(1)),1000);
 
         // Moralize to a Markov Network
         MarkovNet markovNet = bayesianNet.moralize();

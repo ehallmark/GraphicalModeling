@@ -5,7 +5,6 @@ import model.graphs.Graph;
 import model.nodes.FactorNode;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
-import util.Pair;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -22,25 +21,19 @@ public class Dirichlet implements Distribution {
     }
 
     @Override
-    public void train(Map<String,int[]> assignmentMap, int batchSize) {
-        INDArray assignments = Nd4j.create(factor.getNumVariables(),batchSize);
+    public void train(Map<String,Integer> assignmentMap) {
+        INDArray assignments = Nd4j.create(factor.getNumVariables());
         factor.getVarToIndexMap().forEach((var,idx)->{
-            int[] varAssignments = assignmentMap.get(var);
-            if(varAssignments==null) throw new RuntimeException("Null assignment");
-            float[] assignmentFloats = new float[varAssignments.length];
-            for(int i = 0; i < varAssignments.length; i++) {
-                assignmentFloats[i]=(float)varAssignments[i];
-            }
-            assignments.putRow(idx,Nd4j.create(assignmentFloats));
+            Integer varAssignment = assignmentMap.get(var);
+            if(varAssignment==null) throw new RuntimeException("Null assignment");
+            assignments.putScalar(idx,varAssignment);
         });
-        for(int col = 0; col < assignments.columns(); col++) {
-            int[] assignment = new int[factor.getNumVariables()];
-            for(int i = 0; i < assignment.length; i++) {
-                assignment[i]=assignments.getInt(i,col);
-            }
-            int idx = factor.assignmentToIndex(assignment);
-            factor.incrementAtIndex(idx);
+        int[] assignment = new int[factor.getNumVariables()];
+        for(int i = 0; i < assignment.length; i++) {
+            assignment[i]=assignments.getInt(i);
         }
+        int idx = factor.assignmentToIndex(assignment);
+        factor.incrementAtIndex(idx);
     }
 
     @Override

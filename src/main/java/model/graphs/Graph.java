@@ -23,13 +23,13 @@ public abstract class Graph implements Serializable {
     @Getter
     protected List<Node> allNodesList;
     @Getter @Setter
-    protected List<Pair<String,Integer>> currentAssignment;
+    protected Map<String,Integer> currentAssignment;
     @Getter @Setter
-    protected Collection<Map<String,int[]>> trainingData;
+    protected Collection<Map<String,Integer>> trainingData;
     @Getter @Setter
-    protected Collection<Map<String,int[]>> validationData;
+    protected Collection<Map<String,Integer>> validationData;
     @Getter @Setter
-    protected Collection<Map<String,int[]>> testData;
+    protected Collection<Map<String,Integer>> testData;
 
     public Graph() {
         this.labelToNodeMap=new HashMap<>();
@@ -87,7 +87,6 @@ public abstract class Graph implements Serializable {
     }
 
     public void applyLearningAlgorithm(LearningAlgorithm function, int epochs) {
-
         for(int epoch = 0; epoch < epochs; epoch++) {
             System.out.println("Starting epoch: "+(epoch+1));
             function.runAlgorithm().apply(this);
@@ -112,10 +111,8 @@ public abstract class Graph implements Serializable {
 
         Set<String> queryLabels = new HashSet<>();
         Arrays.stream(queryVars).forEach(var->queryLabels.add(var));
-        Set<String> evidenceLabels = new HashSet<>();
-        currentAssignment.forEach(a->evidenceLabels.add(a._1));
-        // choose elimination ordering
 
+        // choose elimination ordering
 
         // Initialize F
         AtomicReference<List<FactorNode>> F = new AtomicReference<>(new LinkedList<>());
@@ -124,9 +121,9 @@ public abstract class Graph implements Serializable {
         });
 
         // HOW TO ADD EVIDENCE?
-        currentAssignment.forEach(assignment->{
-            Node x = labelToNodeMap.get(assignment._1);
-            F.get().add(givenValueFactor(x,assignment._2));
+        currentAssignment.forEach((label,value)->{
+            Node x = labelToNodeMap.get(label);
+            F.get().add(givenValueFactor(x,value));
         });
 
         for(Node z : allNodesList) {

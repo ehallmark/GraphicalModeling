@@ -6,12 +6,8 @@ import model.nodes.FactorNode;
 import model.nodes.Node;
 import util.CliqueFactorList;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * Created by Evan on 4/25/2017.
@@ -104,18 +100,19 @@ public class CliqueTree extends BayesianNet {
         });
     }
 
-
     public void runBeliefPropagation() {
         // select root
         Node root = allNodesList.stream().filter(n->n.getInBound().isEmpty()).findFirst().get();
         // add assignments
         if(currentAssignment!=null) {
-            Map<String,Integer> map = currentAssignment.stream().collect(Collectors.toMap((pair->pair._1),(pair->pair._2)));
             allNodesList.forEach(node->{
-                node.setCurrentAssignmentMap(map);
+                node.setCurrentAssignmentMap(currentAssignment);
             });
         }
-        if(root==null) throw new RuntimeException("No root found");
+
+        if(root==null) {
+            throw new RuntimeException("No root found");
+        }
 
         // 1) pass messages inwards starting from the leaves
         accumulateMessagesTo((CliqueNode)root);
