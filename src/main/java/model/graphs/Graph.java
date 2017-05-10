@@ -101,12 +101,7 @@ public abstract class Graph implements Serializable {
 
     public abstract void connectNodes(Node node1, Node node2);
 
-    public void removeCurrentAssignment() {
-        currentAssignment=null;
-    }
-
     public FactorNode variableElimination(String[] queryVars) {
-        if(currentAssignment==null) throw new RuntimeException("Must set current assignment");
         if(queryVars==null||queryVars.length==0) throw new RuntimeException("Must set queryVars");
 
         Set<String> queryLabels = new HashSet<>();
@@ -120,11 +115,13 @@ public abstract class Graph implements Serializable {
             F.get().add(fac);
         });
 
-        // HOW TO ADD EVIDENCE?
-        currentAssignment.forEach((label,value)->{
-            Node x = labelToNodeMap.get(label);
-            F.get().add(givenValueFactor(x,value));
-        });
+        if(currentAssignment!=null) {
+            // add in evidence
+            currentAssignment.forEach((label, value) -> {
+                Node x = labelToNodeMap.get(label);
+                F.get().add(givenValueFactor(x, value));
+            });
+        }
 
         for(Node z : allNodesList) {
             if(!queryLabels.contains(z.getLabel())) {

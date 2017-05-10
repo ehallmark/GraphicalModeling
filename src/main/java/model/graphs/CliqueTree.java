@@ -6,8 +6,11 @@ import model.nodes.FactorNode;
 import model.nodes.Node;
 import util.CliqueFactorList;
 
+import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Created by Evan on 4/25/2017.
@@ -100,9 +103,10 @@ public class CliqueTree extends BayesianNet {
         });
     }
 
-    public void runBeliefPropagation() {
-        // select root
-        Node root = allNodesList.stream().filter(n->n.getInBound().isEmpty()).findFirst().get();
+    // returns marginals for each variable
+    public Map<String,double[]> runBeliefPropagation() {
+        // select root (could be a forest)
+        List<Node> roots = allNodesList.stream().filter(n->n.getInBound().isEmpty()).collect(Collectors.toList());
         // add assignments
         if(currentAssignment!=null) {
             allNodesList.forEach(node->{
@@ -110,16 +114,21 @@ public class CliqueTree extends BayesianNet {
             });
         }
 
-        if(root==null) {
+        if(roots.isEmpty()) {
             throw new RuntimeException("No root found");
         }
 
-        // 1) pass messages inwards starting from the leaves
-        accumulateMessagesTo((CliqueNode)root);
+        roots.forEach(root->{
+            // 1) pass messages inwards starting from the leaves
+            accumulateMessagesTo((CliqueNode)root);
 
-        // 2) second message passing starting from root
-        propagateMessagesFrom((CliqueNode)root);
+            // 2) second message passing starting from root
+            propagateMessagesFrom((CliqueNode)root);
+        });
 
-        // 3) Done!
+        // 3) extract marginals for each variable
+        allNodesList.forEach(node->{
+            node.getFactors().
+        });
     }
 }
