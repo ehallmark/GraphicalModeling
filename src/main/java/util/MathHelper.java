@@ -19,4 +19,13 @@ public class MathHelper {
         }
         return max;
     }
+
+    public static int indexOfMaxValue(double[] x) {
+        double max = max(x);
+        for(int i = 0; i < x.length; i++) {
+            double xi = x[i];
+            if(xi==max) return i;
+        }
+        return -1;
+    }
 }
