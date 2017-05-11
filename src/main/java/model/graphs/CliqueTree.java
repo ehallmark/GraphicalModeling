@@ -6,9 +6,7 @@ import model.nodes.FactorNode;
 import model.nodes.Node;
 import util.CliqueFactorList;
 
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -28,6 +26,11 @@ public class CliqueTree extends BayesianNet {
     @Override
     public Node addNode(String node, int cardinality) {
         throw new UnsupportedOperationException("Must use addNode(CliqueNode) signature");
+    }
+
+    @Override
+    public CliqueTree createCliqueTree() {
+        return this;
     }
 
     public void constructFactors() {
@@ -83,7 +86,6 @@ public class CliqueTree extends BayesianNet {
 
         // incorporate any messages
         root.incorporateMessagesIntoFactor();
-        root.getCliqueFactor().reNormalize(new DivideByPartition());
         // send next messages
         root.prepAndSendMessageToParent();
     }
@@ -92,7 +94,6 @@ public class CliqueTree extends BayesianNet {
     protected void propagateMessagesFrom(CliqueNode root) {
         // incorporate any messages
         root.incorporateMessagesIntoFactor();
-        root.getCliqueFactor().reNormalize(new DivideByPartition());
 
         // send next messages
         root.prepAndSendMessagesToChildren();
@@ -104,7 +105,7 @@ public class CliqueTree extends BayesianNet {
     }
 
     // returns marginals for each variable
-    public Map<String,double[]> runBeliefPropagation() {
+    public Map<String,FactorNode> runBeliefPropagation(Collection<String> toQuery) {
         // select root (could be a forest)
         List<Node> roots = allNodesList.stream().filter(n->n.getInBound().isEmpty()).collect(Collectors.toList());
         // add assignments
@@ -126,9 +127,31 @@ public class CliqueTree extends BayesianNet {
             propagateMessagesFrom((CliqueNode)root);
         });
 
+        Map<String,List<CliqueNode>> scopeMap = new HashMap<>();
         // 3) extract marginals for each variable
-        allNodesList.forEach(node->{
-            node.getFactors().
+        toQuery.forEach(nodeLabel->{
+            allNodesList.forEach(_cnode->{
+                CliqueNode cliqueNode = (CliqueNode)_cnode;
+                if(cliqueNode.hasFactorScope(new String[]{nodeLabel})) {
+                    if(scopeMap.containsKey(nodeLabel)) {
+                        scopeMap.get(nodeLabel).add(cliqueNode);
+                    } else {
+                        List<CliqueNode> list = new ArrayList<>();
+                        list.add(cliqueNode);
+                        scopeMap.put(nodeLabel,list);
+                    }
+                }
+            });
         });
+        Map<String,FactorNode> toReturn = new HashMap<>();
+        scopeMap.forEach((nodeLabel,cliques)->{
+            FactorNode factor = cliques.stream().map(clique->clique.getCliqueFactor()).reduce((f1,f2)->f1.multiply(f2)).get();
+            Set<String> labelsToSumOver = new HashSet<>(Arrays.asList(factor.getVarLabels()));
+            labelsToSumOver.remove(nodeLabel);
+            FactorNode result = factor.sumOut(labelsToSumOver.toArray(new String[labelsToSumOver.size()]));
+            result.reNormalize(new DivideByPartition());
+            toReturn.put(nodeLabel,result);
+        });
+        return toReturn;
     }
 }

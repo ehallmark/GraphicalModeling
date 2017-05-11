@@ -37,6 +37,8 @@ public abstract class Graph implements Serializable {
         this.factorNodes=new ArrayList<>();
     }
 
+    public abstract CliqueTree createCliqueTree();
+
     public Node addBinaryNode(String label) { // default binary
         return this.addNode(label,2);
     }

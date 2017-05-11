@@ -3,6 +3,7 @@ package model.graphs;
 import model.edges.Edge;
 import model.edges.UndirectedEdge;
 import model.functions.heuristic.TriangulationHeuristic;
+import model.functions.normalization.DivideByPartition;
 import model.nodes.CliqueNode;
 import model.nodes.Node;
 
@@ -29,7 +30,6 @@ public class MarkovNet extends Graph {
     // Returns triangulated (chordal) version of this graph
     //  based on given triangulation heuristic
     public void triangulateInPlace(TriangulationHeuristic heuristic) {
-        System.out.println("Starting triangulation");
         List<Node> copyOfNodes = new ArrayList<>(allNodesList);
         Set<Edge<Node>> edges = new HashSet<>(allNodesList.size());
         Function<List<Node>,Integer> function = heuristic.nextNodeToEliminateFunction();
@@ -54,12 +54,10 @@ public class MarkovNet extends Graph {
             node.removeNeighborConnections();
         }
 
-        System.out.println("Reconstructing graph from edges");
         // reconstruct
         edges.forEach(edge->{
             connectNodes(edge.getNode1(),edge.getNode2());
         });
-        System.out.println("Completed triangulation with: "+edges.size()+" edges");
     }
 
     public CliqueTree createCliqueTree() {
@@ -73,7 +71,6 @@ public class MarkovNet extends Graph {
         Collections.reverse(PEO);
 
         // find maximal clique tree
-        System.out.println("Constructing clique tree");
         AtomicInteger prevMark = new AtomicInteger(-1);
         AtomicInteger j = new AtomicInteger(0);
         Map<Node,Integer> markMap = new HashMap<>();
@@ -117,25 +114,24 @@ public class MarkovNet extends Graph {
             C.put(node,Cj);
         });
 
-        System.out.println("Building factors");
         // Build the factors
         cliqueTree.factorNodes=new ArrayList<>(graph.factorNodes);
         cliqueTree.constructFactors();
         System.out.println("Completed Clique tree with: "+cliqueTree.allNodesList.size() + " cliques");
 
+        // Re-Normalize Values to Probabilities
+        cliqueTree.reNormalize(new DivideByPartition());
         return cliqueTree;
     }
 
     // Make sure the graph is triangulated, or one may not exist!
     public List<Node> findPerfectEliminitationOrdering() {
-        System.out.println("Starting to find perfect elimination ordering");
         // sequence of sigmas
         List<Set<Node>> setSequence = new LinkedList<>();
         // to output
         List<Node> outputSequence = new LinkedList<>();
         // initial set of sequence
         setSequence.add(new HashSet<>(allNodesList));
-        System.out.print("Order:");
         while(!setSequence.isEmpty()) {
             // find and remove a node from the set sequence
             Set<Node> firstSet = setSequence.get(0);
@@ -147,7 +143,6 @@ public class MarkovNet extends Graph {
 
             // add node to the end of output
             outputSequence.add(0, node);
-            System.out.print(" "+node.getLabel());
 
             // for each neighbor of node that exists in one of the sequence sets S
             List<Node> remainingNeighbors = new LinkedList<>(node.getNeighbors());
@@ -182,8 +177,6 @@ public class MarkovNet extends Graph {
                 s++;
             }
         }
-        System.out.println();
-        System.out.println("Found perfect elimination ordering");
         return outputSequence;
     }
 }

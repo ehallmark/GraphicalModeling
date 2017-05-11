@@ -1,6 +1,7 @@
 package model.graphs;
 
 import model.edges.UndirectedEdge;
+import model.functions.heuristic.MinimalCliqueSizeHeuristic;
 import model.nodes.Node;
 
 import java.util.HashSet;
@@ -20,6 +21,13 @@ public class BayesianNet extends Graph {
         node2.addParent(node1);
         node1.addNeighbor(node2);
         node2.addNeighbor(node1);
+    }
+
+    @Override
+    public CliqueTree createCliqueTree() {
+        MarkovNet net = this.moralize();
+        net.triangulateInPlace(new MinimalCliqueSizeHeuristic());
+        return net.createCliqueTree();
     }
 
     public MarkovNet moralize() {

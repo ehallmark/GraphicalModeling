@@ -2,6 +2,7 @@ package model.nodes;
 
 import lombok.Getter;
 import lombok.Setter;
+import model.functions.normalization.DivideByPartition;
 import model.graphs.Graph;
 
 import java.util.*;
@@ -15,7 +16,7 @@ public class CliqueNode extends Node {
     private static final long serialVersionUID = 1l;
     protected Collection<Node> nodes;
     @Getter
-    protected Set<String> nameSet;
+    public final Set<String> nameSet;
     transient protected Map<String,FactorNode> incomingMessageMap;
     @Getter @Setter
     protected FactorNode cliqueFactor;
@@ -58,6 +59,7 @@ public class CliqueNode extends Node {
             factorRef.set(factorRef.get().multiply(message));
         });
         cliqueFactor=factorRef.get();
+        cliqueFactor.reNormalize(new DivideByPartition());
         //incomingMessageMap.clear(); // Don't need them anymore?
     }
 
@@ -103,6 +105,8 @@ public class CliqueNode extends Node {
         });
 
         FactorNode result = newFactor.sumOut(toSumOver.toArray(new String[toSumOver.size()]));
+
+        result.reNormalize(new DivideByPartition());
         return result;
     }
 

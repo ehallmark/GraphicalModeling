@@ -8,9 +8,11 @@ import model.functions.heuristic.MinimalCliqueSizeHeuristic;
 import model.learning.algorithms.BayesianLearningAlgorithm;
 import model.learning.algorithms.ExpectationMaximizationAlgorithm;
 import model.learning.distributions.DirichletCreator;
+import model.nodes.FactorNode;
 import model.nodes.Node;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by ehallmark on 4/26/17.
@@ -76,7 +78,7 @@ public class BeliefPropagationExample {
 
         bayesianNet.setTrainingData(assignments);
 
-        bayesianNet.applyLearningAlgorithm(new ExpectationMaximizationAlgorithm(new DirichletCreator(1)),1000);
+        bayesianNet.applyLearningAlgorithm(new ExpectationMaximizationAlgorithm(new DirichletCreator(1)),10);
 
         // Moralize to a Markov Network
         MarkovNet markovNet = bayesianNet.moralize();
@@ -94,13 +96,19 @@ public class BeliefPropagationExample {
 
         System.out.println("Clique Tree: "+cliqueTree.toString());
 
-        // Run Belief Propagation
-        cliqueTree.runBeliefPropagation();
+        // Add assignment
+        Map<String,Integer> test = new HashMap<>();
+        test.put("Node 3",0);
+        cliqueTree.setCurrentAssignment(test);
 
-        // Re-Normalize Values to Probabilities
-        cliqueTree.reNormalize(new DivideByPartition());
+        // Run Belief Propagation
+        Map<String,FactorNode> result = cliqueTree.runBeliefPropagation(bayesianNet.getAllNodesList().stream().map(node->node.getLabel()).collect(Collectors.toList()));
 
         System.out.println("Clique Tree (after BP): "+cliqueTree.toString());
+
+        result.forEach((label,factor)->{
+            System.out.println("Probability of "+label+": "+factor.toString());
+        });
 
     }
 }
