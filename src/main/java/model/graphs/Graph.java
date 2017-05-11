@@ -40,16 +40,16 @@ public abstract class Graph implements Serializable {
     public abstract CliqueTree createCliqueTree();
 
     public Node addBinaryNode(String label) { // default binary
-        return this.addNode(label,2);
+        return this.addNode(label,2,new double[]{0d,1d});
     }
 
     public Node findNode(String label) {
         return labelToNodeMap.get(label);
     }
 
-    public Node addNode(String label, int cardinality) {
+    public Node addNode(String label, int cardinality, double[] values) {
         if(labelToNodeMap.containsKey(label)) return labelToNodeMap.get(label);
-        Node node = new Node(label,cardinality);
+        Node node = new Node(label,cardinality, values);
         allNodesList.add(node);
         labelToNodeMap.put(label, node);
         return node;
@@ -64,14 +64,16 @@ public abstract class Graph implements Serializable {
     public FactorNode addFactorNode(double[] weights, Node... connectingNodes) {
         String[] connectingLabels = new String[connectingNodes.length];
         int[] varCardinalities = new int[connectingNodes.length];
+        Map<String,double[]> valueMap = new HashMap<>();
         for(int i = 0; i < connectingNodes.length; i++) {
             Node node = connectingNodes[i];
-            String label = connectingNodes[i].getLabel();
+            String label = node.getLabel();
             if(label==null) throw new RuntimeException("Unable to find node");
+            valueMap.put(label,node.getValues());
             connectingLabels[i] = label;
             varCardinalities[i] = node.getCardinality();
         }
-        FactorNode factor = new FactorNode(weights,connectingLabels,varCardinalities);
+        FactorNode factor = new FactorNode(weights,connectingLabels,varCardinalities,valueMap);
         for(int i = 0; i < connectingNodes.length; i++) {
             Node node = connectingNodes[i];
             node.addFactor(factor);
@@ -91,9 +93,13 @@ public abstract class Graph implements Serializable {
     public void applyLearningAlgorithm(LearningAlgorithm function, int epochs) {
         for(int epoch = 0; epoch < epochs; epoch++) {
             System.out.println("Starting epoch: "+(epoch+1));
-            function.runAlgorithm().apply(this);
+            boolean converged = function.runAlgorithm().apply(this);
             Double currentScore = function.computeCurrentScore().apply(this);
             System.out.println("    Score: "+currentScore);
+            if(converged) {
+                System.out.println("Converged during epoch: "+(epoch+1));
+                break;
+            }
         }
     }
 
@@ -144,7 +150,7 @@ public abstract class Graph implements Serializable {
         double[] weights = new double[node.getCardinality()];
         Arrays.fill(weights,0f);
         weights[val]=1f;
-        return new FactorNode(weights,new String[]{node.getLabel()},new int[]{node.getCardinality()});
+        return new FactorNode(weights,new String[]{node.getLabel()},new int[]{node.getCardinality()},node.getValueMap());
     }
 
     protected List<FactorNode> sumProductVariableElimination(List<FactorNode> F, Node x) {

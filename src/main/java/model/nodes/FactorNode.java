@@ -26,31 +26,21 @@ public class FactorNode extends Node {
     protected String[] varLabels;
     @Getter @Setter
     protected double[] weights;
-    // copy of weights to store unnormalized counts and persist learning over multiple training periods
-    @Getter @Setter
-    protected double[] weightsCopy;
     @Getter
     protected Map<String,Integer> varToIndexMap;
     @Getter
     protected int numAssignments;
 
     // 1 dimension array // if null then unnamed
-    public FactorNode(double[] weights, String[] varLabels, int[] cardinalities) {
-        super(null,varLabels.length);
+    public FactorNode(double[] weights, String[] varLabels, int[] cardinalities, Map<String,double[]> valueMap) {
+        super(null,varLabels.length,null);
         if(varLabels.length!=cardinalities.length) throw new RuntimeException("varLabels and Cardinalities must have same size");
         this.varLabels=varLabels;
         this.cardinalities=cardinalities;
         this.weights=weights;
+        this.valueMap.putAll(valueMap);
         this.numVariables=cardinalities.length;
         this.init();
-    }
-
-    public void incrementAtIndex(int idx) {
-        if(idx>=0&&idx<weightsCopy.length) {
-            weightsCopy[idx]++;
-        } else {
-            throw new RuntimeException("Idx does not exist");
-        }
     }
 
     public FactorNode sumOut(String[] toSumOver) {
@@ -81,6 +71,8 @@ public class FactorNode extends Node {
             String z = Zs.get(i);
             indicesToSumOver.add(varToIndexMap.get(z));
         }
+        Map<String,double[]> newValuesMap = new HashMap<>(valueMap);
+        Zs.forEach(z->newValuesMap.remove(z));
         this.assignmentPermutationsStream().forEach(permutation->{
             int[] assignmentsToKeep = new int[newCardinalities.length];
             int j = 0;
@@ -94,7 +86,7 @@ public class FactorNode extends Node {
             int newIdx = assignmentToIndex(assignmentsToKeep,newStrides,newLabels.length);
             psi[newIdx]=psi[newIdx]+weights[oldIdx];
         });
-        return new FactorNode(psi,newLabels,newCardinalities);
+        return new FactorNode(psi,newLabels,newCardinalities,newValuesMap);
     }
 
     // returns all possible assignments with given cardinality array
@@ -159,7 +151,9 @@ public class FactorNode extends Node {
                 }
             }
         }
-        return new FactorNode(psi,unionLabels,unionCardinalities);
+        Map<String,double[]> newValueMap = new HashMap<>(valueMap);
+        for(String label : unionLabels) newValueMap.remove(label);
+        return new FactorNode(psi,unionLabels,unionCardinalities,newValueMap);
     }
 
     public void init() {
@@ -174,7 +168,22 @@ public class FactorNode extends Node {
             varToIndexMap.put(varLabels[i],i);
             numAssignments*=cardinalities[i];
         }
+        if(this.values==null) {
+            this.values = new double[numAssignments];
+            for(int i = 0; i < numAssignments; i++) {
+                double val = 1d;
+                for(String label : varLabels) {
+                    int y = indexToAssignment(label,i);
+                    double[] values = valueMap.get(label);
+                    if(values!=null) {
+                        val*=valueMap.get(label)[y];
+                    }
+                }
+                values[i]=val;
+            }
+        }
         if(weights!=null && numAssignments!=weights.length) throw new RuntimeException("Invalid factor dimensions");
+        if(values!=null && numAssignments!=values.length) throw new RuntimeException("Invalid value dimensions");
     }
 
     public void reNormalize(NormalizationFunction f) {

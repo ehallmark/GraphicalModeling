@@ -27,18 +27,21 @@ public class ExpectationMaximizationAlgorithm extends BayesianLearningAlgorithm 
         graph.setCurrentAssignment(assignmentCopy);
         List<String> nodeLabels = graph.getAllNodesList().stream().filter(node->!assignmentCopy.containsKey(node.getLabel())).map(node->node.getLabel()).collect(Collectors.toList());
         // sets weights so we can run inference
-        distributions.forEach(distribution -> distribution.finish());
-        // Handles most cases
-        CliqueTree cliqueTree = graph.createCliqueTree();
-        cliqueTree.setCurrentAssignment(assignmentCopy);
-        Map<String,FactorNode> expectations = cliqueTree.runBeliefPropagation(nodeLabels);
-        expectations.forEach((label,factor)->{
-            // Find Expectation
-            double[] weights = factor.getWeights();
-            int maxIdx = MathHelper.indexOfMaxValue(weights);
-            if(maxIdx<0||maxIdx>factor.getCardinality()) throw new RuntimeException("Invalid assignment: "+maxIdx);
-            assignmentCopy.put(label,maxIdx);
-        });
+        if(!nodeLabels.isEmpty()) {
+            distributions.forEach(distribution -> distribution.updateFactorWeights());
+            // Handles most cases
+            CliqueTree cliqueTree = graph.createCliqueTree();
+            cliqueTree.setCurrentAssignment(assignmentCopy);
+            Map<String, FactorNode> expectations = cliqueTree.runBeliefPropagation(nodeLabels);
+            expectations.forEach((label, factor) -> {
+                // Find Expectation
+                double[] weights = factor.getWeights();
+                int maxIdx = MathHelper.indexOfMaxValue(weights);
+                if (maxIdx < 0 || maxIdx > factor.getCardinality())
+                    throw new RuntimeException("Invalid assignment: " + maxIdx);
+                assignmentCopy.put(label, maxIdx);
+            });
+        }
         return assignmentCopy;
     }
 }

@@ -7,6 +7,7 @@ import model.graphs.MarkovNet;
 import model.functions.heuristic.MinimalCliqueSizeHeuristic;
 import model.learning.algorithms.BayesianLearningAlgorithm;
 import model.learning.algorithms.ExpectationMaximizationAlgorithm;
+import model.learning.algorithms.MarkovLearningAlgorithm;
 import model.learning.distributions.DirichletCreator;
 import model.nodes.FactorNode;
 import model.nodes.Node;
@@ -23,10 +24,10 @@ public class BeliefPropagationExample {
         BayesianNet bayesianNet = new BayesianNet();
 
         // Add nodes
-        Node n1 = bayesianNet.addNode("Node 1",2);
-        Node n2 = bayesianNet.addNode("Node 2",2);
-        Node n3 = bayesianNet.addNode("Node 3",2);
-        Node n4 = bayesianNet.addNode("Node 4",2);
+        Node n1 = bayesianNet.addBinaryNode("Node 1");
+        Node n2 = bayesianNet.addBinaryNode("Node 2");
+        Node n3 = bayesianNet.addBinaryNode("Node 3");
+        Node n4 = bayesianNet.addBinaryNode("Node 4");
         Node n5 = bayesianNet.addBinaryNode("Node 5"); // Shorthand
         Node n6 = bayesianNet.addBinaryNode("Node 6"); // Shorthand
 
@@ -65,9 +66,9 @@ public class BeliefPropagationExample {
             if(i%10!=0) {
                 for(Node node : bayesianNet.getAllNodesList()) {
                     // randomly don't include some
-                    if(rand.nextBoolean()&&rand.nextBoolean()) {
+                   // if(rand.nextBoolean()&&rand.nextBoolean()) {
                         assignment.put(node.getLabel(),rand.nextInt(node.getCardinality()));
-                    }
+                   // }
                 }
             } else {
                 if(assignment.size()>0)assignments.add(assignment);
@@ -78,10 +79,11 @@ public class BeliefPropagationExample {
 
         bayesianNet.setTrainingData(assignments);
 
-        bayesianNet.applyLearningAlgorithm(new ExpectationMaximizationAlgorithm(new DirichletCreator(1)),10);
-
         // Moralize to a Markov Network
         MarkovNet markovNet = bayesianNet.moralize();
+        markovNet.setTrainingData(assignments);
+
+        markovNet.applyLearningAlgorithm(new BayesianLearningAlgorithm(new DirichletCreator(1)),1000);
 
         // Triangulate with given heuristic
         markovNet.triangulateInPlace(new MinimalCliqueSizeHeuristic());
@@ -109,6 +111,5 @@ public class BeliefPropagationExample {
         result.forEach((label,factor)->{
             System.out.println("Probability of "+label+": "+factor.toString());
         });
-
     }
 }

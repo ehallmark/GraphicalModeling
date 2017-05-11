@@ -28,4 +28,22 @@ public class MathHelper {
         }
         return -1;
     }
+
+    public static double expectedValue(double[] x, double[] values) {
+        if(x.length!=values.length) throw new RuntimeException("Values and probabilities are inconsistent in length");
+        double expectation = 0d;
+        for(int i = 1; i < x.length; i++) {
+            expectation+=x[i]*values[i];
+        }
+        return expectation;
+    }
+
+    public static double[] defaultValues(int cardinality) {
+        if(cardinality<=0) throw new RuntimeException("Cardinality must be positive");
+        double[] values = new double[cardinality];
+        for(int i = 0; i < cardinality; i++) {
+            values[i]=i;
+        }
+        return values;
+    }
 }

@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public class BayesianNet extends Graph {
     // directed graph
 
+    @Override
     public void connectNodes(Node node1, Node node2) {
         if(node1==null||node2==null) return;
         node1.addChild(node2);
@@ -34,7 +35,7 @@ public class BayesianNet extends Graph {
         MarkovNet newNet = new MarkovNet();
         Set<UndirectedEdge> edges = new HashSet<>(); // just for keeping track
         allNodesList.forEach(node->{
-            newNet.addNode(node.getLabel(),node.getCardinality());
+            newNet.addNode(node.getLabel(),node.getCardinality(),node.getValues());
         });
         allNodesList.forEach(node->{
             List<Node> parents = node.getInBound();

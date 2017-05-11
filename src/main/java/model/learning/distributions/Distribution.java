@@ -8,7 +8,6 @@ import java.util.Map;
 public interface Distribution {
     void train(Map<String,Integer> assignmentMap);
     void initialize();
-    // This method copies results of weightsCopy into weights and normalizes
-    void finish();
-
+    void updateFactorWeights();
+    boolean getConverged();
 }

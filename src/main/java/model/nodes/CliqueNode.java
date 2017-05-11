@@ -22,7 +22,7 @@ public class CliqueNode extends Node {
     protected FactorNode cliqueFactor;
 
     public CliqueNode(Collection<Node> nodes) {
-        super(null,nodes.size());
+        super(null,nodes.size(),null);
         this.nodes=nodes;
         this.nameSet=new HashSet<>();
         this.incomingMessageMap=new HashMap<>();

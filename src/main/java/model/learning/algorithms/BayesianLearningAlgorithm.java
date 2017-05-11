@@ -17,10 +17,11 @@ public class BayesianLearningAlgorithm implements LearningAlgorithm {
     protected List<Distribution> distributions;
     public BayesianLearningAlgorithm(DistributionCreator creator) {
         this.creator=creator;
+        this.creator.setUseGradientDescent(false);
         this.distributions=new ArrayList<>();
     }
     @Override
-    public Function<Graph, Void> runAlgorithm() {
+    public Function<Graph, Boolean> runAlgorithm() {
         return (graph -> {
             if(distributions.isEmpty()) {
                 graph.getFactorNodes().forEach(factor -> {
@@ -37,9 +38,10 @@ public class BayesianLearningAlgorithm implements LearningAlgorithm {
             });
             // set factors and normalize
             distributions.forEach(distribution -> {
-                distribution.finish();
+                distribution.updateFactorWeights();
             });
-            return null;
+
+            return distributions.stream().allMatch(distribution -> distribution.getConverged());
         });
     }
 
