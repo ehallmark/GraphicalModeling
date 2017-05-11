@@ -26,7 +26,8 @@ public class ExpectationMaximizationAlgorithm extends BayesianLearningAlgorithm 
         Map<String,Integer> assignmentCopy = new HashMap<>(assignment);
         graph.setCurrentAssignment(assignmentCopy);
         List<String> nodeLabels = graph.getAllNodesList().stream().filter(node->!assignmentCopy.containsKey(node.getLabel())).map(node->node.getLabel()).collect(Collectors.toList());
-
+        // sets weights so we can run inference
+        distributions.forEach(distribution -> distribution.finish());
         // Handles most cases
         CliqueTree cliqueTree = graph.createCliqueTree();
         cliqueTree.setCurrentAssignment(assignmentCopy);

@@ -13,7 +13,7 @@ public class DirichletCreator implements DistributionCreator {
     @Override
     public Distribution create(FactorNode factor) {
         Dirichlet dirichlet = new Dirichlet(factor,alpha);
-        dirichlet.initializeWeights();
+        dirichlet.initialize();
         return dirichlet;
     }
 }

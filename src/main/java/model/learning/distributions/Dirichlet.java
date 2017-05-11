@@ -37,9 +37,15 @@ public class Dirichlet implements Distribution {
     }
 
     @Override
-    public void initializeWeights() {
+    public void finish() {
+        factor.setWeights(Arrays.copyOf(factor.getWeightsCopy(),factor.getNumAssignments()));
+        factor.reNormalize(new DivideByPartition());
+    }
+
+    @Override
+    public void initialize() {
         double[] newWeights = new double[factor.getNumAssignments()];
         Arrays.fill(newWeights,alpha);
-        factor.setWeights(newWeights);
+        factor.setWeightsCopy(newWeights);
     }
 }

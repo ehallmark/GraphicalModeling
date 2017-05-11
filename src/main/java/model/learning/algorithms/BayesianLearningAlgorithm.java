@@ -35,6 +35,10 @@ public class BayesianLearningAlgorithm implements LearningAlgorithm {
                     distribution.train(cleanAssignment);
                 });
             });
+            // set factors and normalize
+            distributions.forEach(distribution -> {
+                distribution.finish();
+            });
             return null;
         });
     }

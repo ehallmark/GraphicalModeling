@@ -26,6 +26,8 @@ public class FactorNode extends Node {
     protected String[] varLabels;
     @Getter @Setter
     protected double[] weights;
+    @Getter @Setter
+    protected double[] weightsCopy;
     @Getter
     protected Map<String,Integer> varToIndexMap;
     @Getter
@@ -43,8 +45,8 @@ public class FactorNode extends Node {
     }
 
     public void incrementAtIndex(int idx) {
-        if(idx>=0&&idx<weights.length) {
-            weights[idx]++;
+        if(idx>=0&&idx<weightsCopy.length) {
+            weightsCopy[idx]++;
         } else {
             throw new RuntimeException("Idx does not exist");
         }

@@ -117,7 +117,6 @@ public class MarkovNet extends Graph {
         // Build the factors
         cliqueTree.factorNodes=new ArrayList<>(graph.factorNodes);
         cliqueTree.constructFactors();
-        System.out.println("Completed Clique tree with: "+cliqueTree.allNodesList.size() + " cliques");
 
         // Re-Normalize Values to Probabilities
         cliqueTree.reNormalize(new DivideByPartition());

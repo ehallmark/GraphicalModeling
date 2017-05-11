@@ -31,7 +31,6 @@ public class BayesianNet extends Graph {
     }
 
     public MarkovNet moralize() {
-        System.out.println("Moralizing graph");
         MarkovNet newNet = new MarkovNet();
         Set<UndirectedEdge> edges = new HashSet<>(); // just for keeping track
         allNodesList.forEach(node->{
@@ -57,7 +56,6 @@ public class BayesianNet extends Graph {
         factorNodes.forEach(factor->{
             newNet.addFactorNode(factor.getWeights(),newNet.findNodes(factor.getVarLabels()));
         });
-        System.out.println("Edges in moralized graph: "+edges.size());
         return newNet;
     }
 }

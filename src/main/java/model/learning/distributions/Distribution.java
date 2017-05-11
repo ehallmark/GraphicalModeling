@@ -7,6 +7,7 @@ import java.util.Map;
  */
 public interface Distribution {
     void train(Map<String,Integer> assignmentMap);
-    void initializeWeights();
+    void initialize();
+    void finish();
 
 }
