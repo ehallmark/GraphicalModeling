@@ -26,6 +26,7 @@ public class FactorNode extends Node {
     protected String[] varLabels;
     @Getter @Setter
     protected double[] weights;
+    // copy of weights to store unnormalized counts and persist learning over multiple training periods
     @Getter @Setter
     protected double[] weightsCopy;
     @Getter
