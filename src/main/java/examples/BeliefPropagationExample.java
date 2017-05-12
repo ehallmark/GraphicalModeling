@@ -3,6 +3,7 @@ package examples;
 import model.functions.normalization.DivideByPartition;
 import model.graphs.BayesianNet;
 import model.graphs.CliqueTree;
+import model.graphs.GibbsChain;
 import model.graphs.MarkovNet;
 import model.functions.heuristic.MinimalCliqueSizeHeuristic;
 import model.learning.algorithms.BayesianLearningAlgorithm;
@@ -111,5 +112,12 @@ public class BeliefPropagationExample {
         result.forEach((label,factor)->{
             System.out.println("Probability of "+label+": "+factor.toString());
         });
+
+        GibbsChain chain = new GibbsChain(markovNet,test);
+        for(int i = 0; i < 1000; i++) {
+            System.out.println("Starting chain: "+i);
+            Map<String,FactorNode> p = chain.next();
+            if(i==999)p.forEach((label,f)->System.out.println("Prob "+label+": "+Arrays.toString(f.getWeights())));
+        }
     }
 }

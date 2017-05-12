@@ -13,7 +13,7 @@ import java.util.stream.Stream;
  * Created by Evan on 4/13/2017.
  */
 public class FactorNode extends Node {
-    private static final long serialVersionUID = 1l;
+    private static final Random rand = new Random(69);
     @Getter
     protected int[] strides;
     @Getter
@@ -154,6 +154,20 @@ public class FactorNode extends Node {
         Map<String,double[]> newValueMap = new HashMap<>(valueMap);
         for(String label : unionLabels) newValueMap.remove(label);
         return new FactorNode(psi,unionLabels,unionCardinalities,newValueMap);
+    }
+
+    public int nextSample() {
+        if(numVariables>1||cardinalities.length<1)  throw new RuntimeException("Can only be a single factor scope");
+        double curr = 0d;
+        double r = rand.nextDouble();
+        for(int i = 0; i < cardinalities[0]; i++) {
+            curr+=weights[i];
+            if(r <= curr) {
+                return i;
+            }
+        }
+        System.out.println("WARNING: Factor does not appear normalized");
+        return cardinalities[0]-1;
     }
 
     public void init() {
