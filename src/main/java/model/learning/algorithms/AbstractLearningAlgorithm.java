@@ -17,10 +17,12 @@ public abstract class AbstractLearningAlgorithm implements LearningAlgorithm {
     protected DistributionCreator creator;
     protected List<Distribution> distributions;
     protected Graph graph;
+    protected boolean converged;
     protected AbstractLearningAlgorithm(DistributionCreator creator, Graph graph) {
         this.creator=creator;
         this.distributions=new ArrayList<>();
         this.graph=graph;
+        this.converged=false;
         graph.getFactorNodes().forEach(factor -> {
             distributions.add(creator.create(factor));
         });
@@ -44,7 +46,9 @@ public abstract class AbstractLearningAlgorithm implements LearningAlgorithm {
     }
 
     public boolean converged() {
-        return distributions.stream().allMatch(distribution -> distribution.getConverged());
+        if(converged) return true;
+        converged = distributions.stream().allMatch(distribution -> distribution.getConverged());
+        return converged; // DON'T CALL 'converged()' OR IT WILL POTENTIALLY RUN FOREVER!!!
     }
 
     // Handle an assignment before learning (say for Expecation Maximization algorithm)
