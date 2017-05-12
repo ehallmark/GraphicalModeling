@@ -10,4 +10,5 @@ public interface Distribution {
     void initialize();
     void updateFactorWeights();
     boolean getConverged();
+    double getScore();
 }

@@ -1,10 +1,7 @@
 package examples;
 
 import model.functions.normalization.DivideByPartition;
-import model.graphs.BayesianNet;
-import model.graphs.CliqueTree;
-import model.graphs.GibbsChain;
-import model.graphs.MarkovNet;
+import model.graphs.*;
 import model.functions.heuristic.MinimalCliqueSizeHeuristic;
 import model.learning.algorithms.BayesianLearningAlgorithm;
 import model.learning.algorithms.ExpectationMaximizationAlgorithm;
@@ -59,6 +56,7 @@ public class BeliefPropagationExample {
         bayesianNet.addFactorNode(null,n3,n5);
         bayesianNet.addFactorNode(null,n6,n5);
         bayesianNet.addFactorNode(null,n1);
+        bayesianNet.addFactorNode(null,n6);
 
         Random rand = new Random(69);
         List<Map<String,Integer>> assignments = new ArrayList<>();
@@ -67,9 +65,9 @@ public class BeliefPropagationExample {
             if(i%10!=0) {
                 for(Node node : bayesianNet.getAllNodesList()) {
                     // randomly don't include some
-                   // if(rand.nextBoolean()&&rand.nextBoolean()) {
+                    //if(rand.nextBoolean()&&rand.nextBoolean()) {
                         assignment.put(node.getLabel(),rand.nextInt(node.getCardinality()));
-                   // }
+                    //}
                 }
             } else {
                 if(assignment.size()>0)assignments.add(assignment);
@@ -78,46 +76,57 @@ public class BeliefPropagationExample {
 
         }
 
-        bayesianNet.setTrainingData(assignments);
-
         // Moralize to a Markov Network
         MarkovNet markovNet = bayesianNet.moralize();
         markovNet.setTrainingData(assignments);
-
-        markovNet.applyLearningAlgorithm(new BayesianLearningAlgorithm(new DirichletCreator(1)),1000);
-
+        markovNet.applyLearningAlgorithm(new MarkovLearningAlgorithm(markovNet,10),100000);
         // Triangulate with given heuristic
         markovNet.triangulateInPlace(new MinimalCliqueSizeHeuristic());
 
+        // Also try on Bayesian net just for fun
+        bayesianNet.setTrainingData(assignments);
+        bayesianNet.applyLearningAlgorithm(new ExpectationMaximizationAlgorithm(bayesianNet,10),1000);
+        MarkovNet markovNet2 = bayesianNet.moralize();
+
         // Create Clique Tree From Triangulated Graph
         CliqueTree cliqueTree = markovNet.createCliqueTree();
-
-        // Re-Normalize Values to Probabilities
-        cliqueTree.getFactorNodes().forEach(node->{
-            node.reNormalize(new DivideByPartition()); // Could also use new SoftMax();
-        });
-
-        System.out.println("Clique Tree: "+cliqueTree.toString());
+        CliqueTree cliqueTree2 = markovNet2.createCliqueTree();
 
         // Add assignment
         Map<String,Integer> test = new HashMap<>();
-        test.put("Node 3",0);
+        //test.put("Node 3",0);
         cliqueTree.setCurrentAssignment(test);
+        cliqueTree2.setCurrentAssignment(test);
 
         // Run Belief Propagation
         Map<String,FactorNode> result = cliqueTree.runBeliefPropagation(bayesianNet.getAllNodesList().stream().map(node->node.getLabel()).collect(Collectors.toList()));
+        Map<String,FactorNode> result2 = cliqueTree2.runBeliefPropagation(bayesianNet.getAllNodesList().stream().map(node->node.getLabel()).collect(Collectors.toList()));
 
-        System.out.println("Clique Tree (after BP): "+cliqueTree.toString());
-
-        result.forEach((label,factor)->{
-            System.out.println("Probability of "+label+": "+factor.toString());
+        System.out.println("Result 1: ");
+        result.forEach((label,f)->{
+            System.out.println("Prob "+label+": "+Arrays.toString(f.getWeights()));
         });
 
-        GibbsChain chain = new GibbsChain(markovNet,test);
-        for(int i = 0; i < 1000; i++) {
-            System.out.println("Starting chain: "+i);
+        System.out.println("Result 2: ");
+        result2.forEach((label,f)->{
+            System.out.println("Prob "+label+": "+Arrays.toString(f.getWeights()));
+        });
+
+        // Gibbs Chain
+        System.out.println("Gibbs Chain: ");
+        Iterator<Map<String,FactorNode>> chain = new GibbsChain(bayesianNet,test);
+        int chainLength = 100000;
+        for(int i = 0; i < chainLength; i++) {
             Map<String,FactorNode> p = chain.next();
-            if(i==999)p.forEach((label,f)->System.out.println("Prob "+label+": "+Arrays.toString(f.getWeights())));
+            if(i==chainLength-1)p.forEach((label,f)->System.out.println("Prob "+label+": "+Arrays.toString(f.getWeights())));
+        }
+
+        // MH chain
+        System.out.println("MH Chain: ");
+        chain = new MetropolisHastingsChain(bayesianNet,test);
+        for(int i = 0; i < chainLength; i++) {
+            Map<String,FactorNode> p = chain.next();
+            if(i==chainLength-1)p.forEach((label,f)->System.out.println("Prob "+label+": "+Arrays.toString(f.getWeights())));
         }
     }
 }

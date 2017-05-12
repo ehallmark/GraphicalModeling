@@ -8,6 +8,7 @@ import java.util.function.Function;
  * Created by Evan on 4/24/2017.
  */
 public interface LearningAlgorithm {
-    Function<Graph,Boolean> runAlgorithm();
-    Function<Graph,Double> computeCurrentScore();
+    // returns convergence
+    boolean runAlgorithm();
+    double computeCurrentScore();
 }

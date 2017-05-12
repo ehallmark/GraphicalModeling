@@ -1,5 +1,7 @@
 package util;
 
+import org.nd4j.linalg.factory.Nd4j;
+
 import java.util.Arrays;
 
 /**
@@ -27,6 +29,33 @@ public class MathHelper {
             if(xi==max) return i;
         }
         return -1;
+    }
+
+    public static double[] divideBy(double[] in, double d) {
+        if(d==0) throw new RuntimeException("Cannot divide by zero");
+        double[] out = new double[in.length];
+        for(int i = 0; i < out.length; i++) {
+            out[i]=in[i]/d;
+        }
+        return out;
+    }
+
+    public static double[] subtract(double[] y, double[] x) {
+        if(y.length!=x.length) throw new RuntimeException("x and y have different lengths");
+        double[] out = new double[y.length];
+        for(int i = 0; i < out.length; i++) {
+            out[i] = y[i]-x[i];
+        }
+        return out;
+    }
+
+    public static double computeDistance(double[] x, double[] y) {
+        double sumX = sum(x);
+        double sumY = sum(y);
+        double[] unitX = divideBy(x,sumX);
+        double[] unitY = divideBy(y,sumY);
+        double[] yMinusX = subtract(unitY,unitX);
+        return max(yMinusX);
     }
 
     public static double expectedValue(double[] x, double[] values) {

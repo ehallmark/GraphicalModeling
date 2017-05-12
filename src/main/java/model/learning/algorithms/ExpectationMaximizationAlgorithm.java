@@ -5,6 +5,7 @@ import model.graphs.BayesianNet;
 import model.graphs.CliqueTree;
 import model.graphs.Graph;
 import model.graphs.MarkovNet;
+import model.learning.distributions.DirichletCreator;
 import model.learning.distributions.DistributionCreator;
 import model.nodes.FactorNode;
 import util.MathHelper;
@@ -16,9 +17,12 @@ import java.util.stream.Collectors;
  * Created by ehallmark on 5/10/17.
  */
 public class ExpectationMaximizationAlgorithm extends BayesianLearningAlgorithm {
+    public ExpectationMaximizationAlgorithm(Graph graph, double alpha) {
+        super(graph,alpha);
+    }
 
-    public ExpectationMaximizationAlgorithm(DistributionCreator creator) {
-        super(creator);
+    protected ExpectationMaximizationAlgorithm(Graph graph, DistributionCreator creator) {
+        super(graph,creator);
     }
 
     @Override

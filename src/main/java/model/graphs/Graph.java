@@ -93,8 +93,8 @@ public abstract class Graph implements Serializable {
     public void applyLearningAlgorithm(LearningAlgorithm function, int epochs) {
         for(int epoch = 0; epoch < epochs; epoch++) {
             System.out.println("Starting epoch: "+(epoch+1));
-            boolean converged = function.runAlgorithm().apply(this);
-            Double currentScore = function.computeCurrentScore().apply(this);
+            boolean converged = function.runAlgorithm();
+            Double currentScore = function.computeCurrentScore();
             System.out.println("    Score: "+currentScore);
             if(converged) {
                 System.out.println("Converged during epoch: "+(epoch+1));

@@ -3,12 +3,9 @@ package model.learning.distributions;
 import lombok.Getter;
 import lombok.Setter;
 import model.functions.normalization.DivideByPartition;
-import model.graphs.Graph;
 import model.nodes.FactorNode;
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.ops.transforms.Transforms;
 import util.MathHelper;
+
 
 import java.util.Arrays;
 import java.util.Map;
@@ -18,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by ehallmark on 4/28/17.
  */
 public class Dirichlet implements Distribution {
-    private static final double EPSILON = 0.00005;
+    private static final double EPSILON = 0.00001;
     protected double alpha;
     protected FactorNode factor;
     protected AtomicInteger seenSoFar;
@@ -26,7 +23,10 @@ public class Dirichlet implements Distribution {
     protected double[] expectationsInData;
     protected double[] expectationsInTheta;
     protected double[] weightsCopy;
+    protected double[] previousWeightsCopy;
     protected boolean converged;
+    @Getter
+    protected double score;
     @Getter @Setter
     protected double learningRate = 0.01d;
     protected boolean useGradientDescent;
@@ -36,12 +36,16 @@ public class Dirichlet implements Distribution {
         this.converged=false;
         this.useGradientDescent=useGradientDescent;
         this.seenSoFar=new AtomicInteger(0);
-        this.accumulatedValues=new double[factor.getNumAssignments()];
-        this.expectationsInData=new double[factor.getNumAssignments()];
-        this.expectationsInTheta=new double[factor.getNumAssignments()];
         this.weightsCopy=new double[factor.getNumAssignments()];
-        Arrays.fill(this.accumulatedValues,0d);
-        Arrays.fill(this.weightsCopy,0d);
+        this.score=Double.MAX_VALUE;
+
+        if(useGradientDescent) {
+            this.accumulatedValues=new double[factor.getNumAssignments()];
+            this.expectationsInData=new double[factor.getNumAssignments()];
+            this.expectationsInTheta=new double[factor.getNumAssignments()];
+            Arrays.fill(this.accumulatedValues,0d);
+            Arrays.fill(this.weightsCopy,0d);
+        }
     }
 
 
@@ -57,11 +61,23 @@ public class Dirichlet implements Distribution {
             if(varAssignment==null) throw new RuntimeException("Null assignment");
             assignment[idx]=varAssignment;
         });
+
         int idx = factor.assignmentToIndex(assignment);
+
         weightsCopy[idx]++;
         if(useGradientDescent) {
             accumulatedValues[idx]+=factor.getValues()[idx];
+        } else {
+            if (previousWeightsCopy != null && seenSoFar.get()>1) {
+                converged=true;
+                score = MathHelper.computeDistance(weightsCopy,previousWeightsCopy);
+                score=Math.abs(score);
+                updateConvergedStatus();
+            }
+            previousWeightsCopy = Arrays.copyOf(weightsCopy, weightsCopy.length);
         }
+
+        // increment final counter
         seenSoFar.getAndIncrement();
     }
 
@@ -74,6 +90,7 @@ public class Dirichlet implements Distribution {
 
         if(useGradientDescent && seenSoFar.get()>0) {
             converged = true;
+            score=0d;
             double[] values = factor.getValues();
             final int M = seenSoFar.get();
             double[] weights = factor.getWeights();
@@ -81,11 +98,17 @@ public class Dirichlet implements Distribution {
                 double expectData = accumulatedValues[i] / M;
                 double expectTheta = (weightsCopy[i] * values[i]) / M;
                 double deriv = expectData - expectTheta;
-                if (Math.abs(deriv) > EPSILON) converged = false;
-                System.out.println("Deriv: " + deriv);
+                score+=deriv;
                 weights[i] = weights[i] + learningRate * deriv;
             }
+            score/=factor.getNumAssignments();
+            score=Math.abs(score);
+            updateConvergedStatus();
         }
+    }
+
+    private void updateConvergedStatus() {
+        if (score > EPSILON) converged = false;
     }
 
     @Override
