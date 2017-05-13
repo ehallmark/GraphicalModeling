@@ -1,6 +1,7 @@
 package model.learning.algorithms;
 
 import model.functions.heuristic.MinimalCliqueSizeHeuristic;
+import model.functions.inference_methods.InferenceMethod;
 import model.graphs.BayesianNet;
 import model.graphs.CliqueTree;
 import model.graphs.Graph;
@@ -17,35 +18,19 @@ import java.util.stream.Collectors;
  * Created by ehallmark on 5/10/17.
  */
 public class ExpectationMaximizationAlgorithm extends BayesianLearningAlgorithm {
-    public ExpectationMaximizationAlgorithm(Graph graph, double alpha) {
+    protected InferenceMethod inferenceMethod;
+    public ExpectationMaximizationAlgorithm(Graph graph, double alpha, InferenceMethod inferenceMethod) {
         super(graph,alpha);
+        this.inferenceMethod=inferenceMethod;
     }
 
-    protected ExpectationMaximizationAlgorithm(Graph graph, DistributionCreator creator) {
+    protected ExpectationMaximizationAlgorithm(Graph graph, DistributionCreator creator, InferenceMethod inferenceMethod) {
         super(graph,creator);
+        this.inferenceMethod=inferenceMethod;
     }
 
     @Override
     protected Map<String,Integer> handleAssignment(Map<String,Integer> assignment, Graph graph) {
-        Map<String,Integer> assignmentCopy = new HashMap<>(assignment);
-        graph.setCurrentAssignment(assignmentCopy);
-        List<String> nodeLabels = graph.getAllNodesList().stream().filter(node->!assignmentCopy.containsKey(node.getLabel())).map(node->node.getLabel()).collect(Collectors.toList());
-        // sets weights so we can run inference
-        if(!nodeLabels.isEmpty()) {
-            distributions.forEach(distribution -> distribution.updateFactorWeights());
-            // Handles most cases
-            CliqueTree cliqueTree = graph.createCliqueTree();
-            cliqueTree.setCurrentAssignment(assignmentCopy);
-            Map<String, FactorNode> expectations = cliqueTree.runBeliefPropagation(nodeLabels);
-            expectations.forEach((label, factor) -> {
-                // Find Expectation
-                double[] weights = factor.getWeights();
-                int maxIdx = MathHelper.indexOfMaxValue(weights);
-                if (maxIdx < 0 || maxIdx > factor.getCardinality())
-                    throw new RuntimeException("Invalid assignment: " + maxIdx);
-                assignmentCopy.put(label, maxIdx);
-            });
-        }
-        return assignmentCopy;
+        return inferenceMethod.nextAssignments(graph,assignment);
     }
 }

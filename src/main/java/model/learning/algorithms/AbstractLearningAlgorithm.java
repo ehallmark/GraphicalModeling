@@ -26,6 +26,7 @@ public abstract class AbstractLearningAlgorithm implements LearningAlgorithm {
         graph.getFactorNodes().forEach(factor -> {
             distributions.add(creator.create(factor));
         });
+        graph.setDistributions(distributions);
     }
 
     @Override

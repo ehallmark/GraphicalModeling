@@ -1,5 +1,6 @@
 package model.learning.algorithms;
 
+import model.functions.inference_methods.InferenceMethod;
 import model.graphs.CliqueTree;
 import model.graphs.Graph;
 import model.graphs.MarkovNet;
@@ -21,8 +22,8 @@ import java.util.stream.Collectors;
  * Created by Evan on 4/29/2017.
  */
 public class MarkovLearningAlgorithm extends ExpectationMaximizationAlgorithm {
-    public MarkovLearningAlgorithm(Graph graph, double alpha) {
-        super(graph,new DirichletCreator(alpha,true));
+    public MarkovLearningAlgorithm(Graph graph, double alpha, InferenceMethod inferenceMethod) {
+        super(graph,new DirichletCreator(alpha,true),inferenceMethod);
     }
 
     @Override

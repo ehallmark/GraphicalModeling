@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import model.functions.normalization.NormalizationFunction;
 import model.learning.algorithms.LearningAlgorithm;
+import model.learning.distributions.Distribution;
 import model.nodes.FactorNode;
 import model.nodes.Node;
 import util.Pair;
@@ -17,6 +18,8 @@ import java.util.stream.Stream;
  * Created by Evan on 4/13/2017.
  */
 public abstract class Graph implements Serializable {
+    @Getter @Setter
+    protected List<Distribution> distributions;
     protected Map<String, Node> labelToNodeMap;
     @Getter
     protected List<FactorNode> factorNodes;
