@@ -2,6 +2,7 @@ package model.graphs;
 
 import lombok.Getter;
 import lombok.Setter;
+import model.functions.normalization.DivideByPartition;
 import model.functions.normalization.NormalizationFunction;
 import model.learning.algorithms.LearningAlgorithm;
 import model.learning.distributions.Distribution;
@@ -99,10 +100,10 @@ public abstract class Graph implements Serializable {
             boolean converged = function.runAlgorithm();
             Double currentScore = function.computeCurrentScore();
             System.out.println("    Score: "+currentScore);
-            if(converged) {
-                System.out.println("Converged during epoch: "+(epoch+1));
-                break;
-            }
+            //if(converged) {
+            //    System.out.println("Converged during epoch: "+(epoch+1));
+            //    //break;
+            //}
         }
     }
 
@@ -146,6 +147,7 @@ public abstract class Graph implements Serializable {
         FactorNode query = F.get().remove(0);
         while(!F.get().isEmpty()) query = query.multiply(F.get().remove(0));
 
+        query.reNormalize(new DivideByPartition());
         return query;
     }
 

@@ -51,7 +51,7 @@ public class GibbsChain implements Iterator<Map<String,FactorNode>> {
                 scope.remove(node.getLabel());
                 // incorporate assignments into factor
                 scope.forEach(mem -> factors.add(Graph.givenValueFactor(graph.findNode(mem), permanentAssignments.containsKey(mem) ? permanentAssignments.get(mem) : currentAssignments.get(mem))));
-                FactorNode result = factors.stream().reduce((f1, f2) -> f1.multiply(f2)).get();
+                FactorNode result = factors.parallelStream().reduce((f1, f2) -> f1.multiply(f2)).get();
                 if (result.getNumVariables() > 1) {
                     Set<String> toSumOut = new HashSet<>(Arrays.asList(result.getVarLabels()));
                     toSumOut.remove(node.getLabel());

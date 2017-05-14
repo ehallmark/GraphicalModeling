@@ -36,15 +36,12 @@ public class Dirichlet implements Distribution {
         this.converged=false;
         this.useGradientDescent=useGradientDescent;
         this.seenSoFar=new AtomicInteger(0);
-        this.weightsCopy=new double[factor.getNumAssignments()];
         this.score=Double.MAX_VALUE;
-
         if(useGradientDescent) {
             this.accumulatedValues=new double[factor.getNumAssignments()];
             this.expectationsInData=new double[factor.getNumAssignments()];
             this.expectationsInTheta=new double[factor.getNumAssignments()];
             Arrays.fill(this.accumulatedValues,0d);
-            Arrays.fill(this.weightsCopy,0d);
         }
     }
 

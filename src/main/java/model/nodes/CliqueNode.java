@@ -83,14 +83,6 @@ public class CliqueNode extends Node {
     // Gets the message to be passed from this -> other
     public FactorNode getMessageFor(CliqueNode otherNode) {
         AtomicReference<FactorNode> newFactorRef = new AtomicReference<>(cliqueFactor);
-        // check for assignments
-        if(currentAssignmentMap!=null) {
-            nodes.forEach(node -> {
-                if (currentAssignmentMap.containsKey(node.getLabel())) {
-                    newFactorRef.set(newFactorRef.get().multiply(Graph.givenValueFactor(node, currentAssignmentMap.get(node.getLabel()))));
-                }
-            });
-        }
         incomingMessageMap.forEach((senderLabel,message)->{
             if(!otherNode.getLabel().equals(senderLabel)) {
                 newFactorRef.set(newFactorRef.get().multiply(message));

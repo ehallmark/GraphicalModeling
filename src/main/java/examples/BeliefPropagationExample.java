@@ -117,7 +117,7 @@ public class BeliefPropagationExample {
         // Gibbs Chain
         System.out.println("Gibbs Chain: ");
         Iterator<Map<String,FactorNode>> chain = new GibbsChain(bayesianNet,test);
-        int chainLength = 100000;
+        int chainLength = 10000;
         for(int i = 0; i < chainLength; i++) {
             Map<String,FactorNode> p = chain.next();
             if(i==chainLength-1)p.forEach((label,f)->System.out.println("Prob "+label+": "+Arrays.toString(f.getWeights())));

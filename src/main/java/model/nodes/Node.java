@@ -27,9 +27,6 @@ public class Node implements Serializable {
     protected final String label;
     @Getter
     protected int cardinality;
-    @Setter
-    transient protected Map<String,Integer> currentAssignmentMap;
-
     @Getter
     protected final Map<String,double[]> valueMap;
     @Getter

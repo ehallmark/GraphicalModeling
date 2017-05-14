@@ -1,5 +1,6 @@
 package model.graphs;
 
+import lombok.Setter;
 import model.functions.normalization.DivideByPartition;
 import model.nodes.FactorNode;
 
@@ -11,7 +12,8 @@ import java.util.*;
 public class MetropolisHastingsChain implements Iterator<Map<String,FactorNode>> {
     protected Graph graph;
     protected Map<String,Integer> currentAssignments;
-    protected final Map<String,Integer> permanentAssignments;
+    @Setter
+    protected Map<String,Integer> permanentAssignments;
     protected Random rand = new Random(69);
     public MetropolisHastingsChain(Graph graph, Map<String,Integer> permanentAssignments) {
         this.graph=graph;
@@ -56,7 +58,7 @@ public class MetropolisHastingsChain implements Iterator<Map<String,FactorNode>>
                 Set<String> scope = new HashSet<>();
                 factors.forEach(mem -> scope.addAll(mem.getVarToIndexMap().keySet()));
                 scope.remove(node.getLabel());
-                FactorNode result = factors.stream().reduce((f1, f2) -> f1.multiply(f2)).get();
+                FactorNode result = factors.parallelStream().reduce((f1, f2) -> f1.multiply(f2)).get();
                 if (result.getNumVariables() > 1) {
                     Set<String> toSumOut = new HashSet<>(Arrays.asList(result.getVarLabels()));
                     toSumOut.remove(node.getLabel());

@@ -6,6 +6,7 @@ import model.functions.normalization.NormalizationFunction;
 import util.DoubleDoublePair;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -73,18 +74,20 @@ public class FactorNode extends Node {
         }
         Map<String,double[]> newValuesMap = new HashMap<>(valueMap);
         Zs.forEach(z->newValuesMap.remove(z));
-        this.assignmentPermutationsStream().forEach(permutation->{
+        this.assignmentPermutationsStream().parallel().forEach(permutation->{
             int[] assignmentsToKeep = new int[newCardinalities.length];
             int j = 0;
             for(int i = 0; i < cardinalities.length; i++) {
                 if(!indicesToSumOver.contains(i)) {
-                    assignmentsToKeep[j]=permutation[i];
+                    assignmentsToKeep[j] = permutation[i];
                     j++;
                 }
             }
             int oldIdx = assignmentToIndex(permutation);
             int newIdx = assignmentToIndex(assignmentsToKeep,newStrides,newLabels.length);
-            psi[newIdx]=psi[newIdx]+weights[oldIdx];
+            synchronized (psi) {
+                psi[newIdx] = psi[newIdx] + weights[oldIdx];
+            }
         });
         return new FactorNode(psi,newLabels,newCardinalities,newValuesMap);
     }
@@ -93,7 +96,7 @@ public class FactorNode extends Node {
     public Stream<int[]> assignmentPermutationsStream() {
         int numAssignments=numAssignmentCombinations(cardinalities);
         List<Integer> indices = new ArrayList<>(numAssignments); for(int i = 0; i < numAssignments; i++) indices.add(i);
-        return indices.stream().map(idx->{
+        return indices.parallelStream().map(idx->{
             int[] assignment = new int[cardinalities.length];
             for(int i = 0; i < cardinalities.length; i++) {
                 assignment[i]=indexToAssignment(varLabels[i],idx);
@@ -185,16 +188,20 @@ public class FactorNode extends Node {
         if(this.values==null) {
             this.values = new double[numAssignments];
             for(int i = 0; i < numAssignments; i++) {
+                final int idx = i;
+
                 double val = 1d;
                 for(String label : varLabels) {
-                    int y = indexToAssignment(label,i);
+                    int y = indexToAssignment(label,idx);
                     double[] values = valueMap.get(label);
                     if(values!=null) {
                         val*=valueMap.get(label)[y];
                     }
                 }
-                values[i]=val;
+                values[idx]=val;
+
             }
+
         }
         if(weights!=null && numAssignments!=weights.length) throw new RuntimeException("Invalid factor dimensions");
         if(values!=null && numAssignments!=values.length) throw new RuntimeException("Invalid value dimensions");

@@ -111,7 +111,14 @@ public class CliqueTree extends BayesianNet {
         // add assignments
         if(currentAssignment!=null) {
             allNodesList.forEach(node->{
-                node.setCurrentAssignmentMap(currentAssignment);
+                CliqueNode cliqueNode = (CliqueNode)node;
+                // add in evidence
+                currentAssignment.forEach((label, value) -> {
+                    if(cliqueNode.hasFactorScope(new String[]{label})) {
+                        Node x = labelToNodeMap.get(label);
+                        cliqueNode.setCliqueFactor(cliqueNode.getCliqueFactor().multiply(givenValueFactor(x, value)));
+                    }
+                });
             });
         }
 
@@ -143,6 +150,7 @@ public class CliqueTree extends BayesianNet {
                 }
             });
         });
+
         Map<String,FactorNode> toReturn = new HashMap<>();
         scopeMap.forEach((nodeLabel,cliques)->{
             FactorNode factor = cliques.stream().map(clique->clique.getCliqueFactor()).reduce((f1,f2)->f1.multiply(f2)).get();
