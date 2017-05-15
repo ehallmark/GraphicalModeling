@@ -82,7 +82,7 @@ public class MarkovNet extends Graph {
             markMap.put(node,0);
             M.put(node,new HashSet<>());
         });
-        CliqueTree cliqueTree = new CliqueTree();
+        CliqueTree cliqueTree = new CliqueTree(graph);
         cliqueTree.addNode(CjRef.get());
 
 

@@ -100,10 +100,10 @@ public abstract class Graph implements Serializable {
             boolean converged = function.runAlgorithm();
             Double currentScore = function.computeCurrentScore();
             System.out.println("    Score: "+currentScore);
-            //if(converged) {
-            //    System.out.println("Converged during epoch: "+(epoch+1));
-            //    //break;
-            //}
+            if(converged) {
+                System.out.println("Converged during epoch: "+(epoch+1));
+                break;
+            }
         }
     }
 

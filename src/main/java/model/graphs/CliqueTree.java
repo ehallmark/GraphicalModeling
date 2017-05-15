@@ -14,8 +14,10 @@ import java.util.stream.Collectors;
  * Created by Evan on 4/25/2017.
  */
 public class CliqueTree extends BayesianNet {
-    public CliqueTree() {
+    protected Graph originalGraph;
+    public CliqueTree(Graph originalGraph) {
         super();
+        this.originalGraph=originalGraph;
     }
 
     public CliqueNode addNode(CliqueNode node) {
@@ -115,7 +117,7 @@ public class CliqueTree extends BayesianNet {
                 // add in evidence
                 currentAssignment.forEach((label, value) -> {
                     if(cliqueNode.hasFactorScope(new String[]{label})) {
-                        Node x = labelToNodeMap.get(label);
+                        Node x = originalGraph.findNode(label);
                         cliqueNode.setCliqueFactor(cliqueNode.getCliqueFactor().multiply(givenValueFactor(x, value)));
                     }
                 });

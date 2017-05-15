@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by ehallmark on 4/28/17.
  */
 public class Dirichlet implements Distribution {
-    private static final double EPSILON = 0.00001;
+    private static final double EPSILON = 0.000001;
     protected double alpha;
     protected FactorNode factor;
     protected AtomicInteger seenSoFar;
