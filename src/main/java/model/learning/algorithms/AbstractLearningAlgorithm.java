@@ -32,12 +32,10 @@ public abstract class AbstractLearningAlgorithm implements LearningAlgorithm {
     @Override
     public boolean runAlgorithm() {
         graph.getTrainingData().forEach(assignment->{
-            if(!converged()) {
-                Map<String, Integer> cleanAssignment = handleAssignment(assignment, graph);
-                distributions.forEach(distribution -> {
-                    distribution.train(cleanAssignment);
-                });
-            }
+            Map<String, Integer> cleanAssignment = handleAssignment(assignment, graph);
+            distributions.forEach(distribution -> {
+                distribution.train(cleanAssignment);
+            });
         });
         // set factors and normalize
         distributions.forEach(distribution -> {
