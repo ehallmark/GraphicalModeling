@@ -1,11 +1,12 @@
 package model.learning.distributions;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
  * Created by ehallmark on 4/28/17.
  */
-public interface Distribution {
+public interface Distribution extends Serializable {
     void train(Map<String,Integer> assignmentMap);
     void initialize();
     void updateFactorWeights();
