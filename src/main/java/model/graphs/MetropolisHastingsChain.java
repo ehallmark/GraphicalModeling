@@ -66,8 +66,8 @@ public class MetropolisHastingsChain implements Iterator<Map<String,FactorNode>>
                 }
                 result.reNormalize(new DivideByPartition());
 
-                double probProposal = result.getWeights()[nextAssignment];
-                double probCurrentState = result.getWeights()[currAssignment];
+                double probProposal = result.getWeights().getDouble(nextAssignment);
+                double probCurrentState = result.getWeights().getDouble(currAssignment);
 
                 if(probCurrentState==0||u<(probProposal/probCurrentState)) {
                     currentAssignments.put(node.getLabel(), nextAssignment);

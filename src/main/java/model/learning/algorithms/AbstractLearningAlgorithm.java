@@ -7,6 +7,7 @@ import model.learning.distributions.DistributionCreator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,7 @@ public abstract class AbstractLearningAlgorithm implements LearningAlgorithm {
     protected List<Distribution> distributions;
     protected Graph graph;
     protected boolean converged;
+    protected int batchSize = 10;
     protected AbstractLearningAlgorithm(DistributionCreator creator, Graph graph) {
         this.creator=creator;
         this.distributions=new ArrayList<>();
@@ -33,8 +35,12 @@ public abstract class AbstractLearningAlgorithm implements LearningAlgorithm {
     public boolean runAlgorithm() {
         graph.getTrainingData().forEach(assignment->{
             Map<String, Integer> cleanAssignment = handleAssignment(assignment, graph);
+            AtomicInteger cnt = new AtomicInteger(0);
             distributions.forEach(distribution -> {
                 distribution.train(cleanAssignment);
+                if(cnt.getAndIncrement()%batchSize==0) {
+                    distribution.updateFactorWeights();
+                }
             });
         });
         // set factors and normalize
@@ -50,7 +56,7 @@ public abstract class AbstractLearningAlgorithm implements LearningAlgorithm {
         return converged; // DON'T CALL 'converged()' OR IT WILL POTENTIALLY RUN FOREVER!!!
     }
 
-    // Handle an assignment before learning (say for Expecation Maximization algorithm)
+    // Handle an assignment before learning (say for Expectation Maximization algorithm)
     protected abstract Map<String,Integer> handleAssignment(Map<String,Integer> assignment, Graph graph);
 
     @Override

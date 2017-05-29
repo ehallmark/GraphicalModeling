@@ -3,6 +3,8 @@ package model.nodes;
 import lombok.Getter;
 import lombok.Setter;
 import model.functions.normalization.NormalizationFunction;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 import util.DoubleDoublePair;
 
 import java.util.*;
@@ -26,14 +28,13 @@ public class FactorNode extends Node {
     @Getter
     protected String[] varLabels;
     @Getter @Setter
-    protected double[] weights;
+    protected INDArray weights;
     @Getter
     protected Map<String,Integer> varToIndexMap;
     @Getter
     protected int numAssignments;
 
-    // 1 dimension array // if null then unnamed
-    public FactorNode(double[] weights, String[] varLabels, int[] cardinalities, Map<String,double[]> valueMap) {
+    public FactorNode(INDArray weights, String[] varLabels, int[] cardinalities, Map<String,INDArray> valueMap) {
         super(null,varLabels.length,null);
         if(varLabels.length!=cardinalities.length) throw new RuntimeException("varLabels and Cardinalities must have same size");
         this.varLabels=varLabels;
@@ -72,7 +73,7 @@ public class FactorNode extends Node {
             String z = Zs.get(i);
             indicesToSumOver.add(varToIndexMap.get(z));
         }
-        Map<String,double[]> newValuesMap = new HashMap<>(valueMap);
+        Map<String,INDArray> newValuesMap = new HashMap<>(valueMap);
         Zs.forEach(z->newValuesMap.remove(z));
         this.assignmentPermutationsStream().parallel().forEach(permutation->{
             int[] assignmentsToKeep = new int[newCardinalities.length];
@@ -86,10 +87,10 @@ public class FactorNode extends Node {
             int oldIdx = assignmentToIndex(permutation);
             int newIdx = assignmentToIndex(assignmentsToKeep,newStrides,newLabels.length);
             synchronized (psi) {
-                psi[newIdx] = psi[newIdx] + weights[oldIdx];
+                psi[newIdx] = psi[newIdx] + weights.getDouble(oldIdx);
             }
         });
-        return new FactorNode(psi,newLabels,newCardinalities,newValuesMap);
+        return new FactorNode(Nd4j.create(psi),newLabels,newCardinalities,newValuesMap);
     }
 
     // returns all possible assignments with given cardinality array
@@ -137,10 +138,12 @@ public class FactorNode extends Node {
             assignments[l]=0;
         }
 
+        double[] myWeights = weights.data().asDouble();
+        double[] otherWeights = other.weights.data().asDouble();
         int numAssignmentsTotal = numAssignmentCombinations(unionCardinalities);
         double[] psi = new double[numAssignmentsTotal];
         for( int i = 0; i < numAssignmentsTotal; i++) {
-            psi[i] = f.apply(new DoubleDoublePair(weights[j],other.weights[k]));
+            psi[i] = f.apply(new DoubleDoublePair(myWeights[j],otherWeights[k]));
             for(int l = 0; l < unionSize; l++) {
                 assignments[l]++;
                 if(assignments[l]==unionCardinalities[l]) {
@@ -154,9 +157,9 @@ public class FactorNode extends Node {
                 }
             }
         }
-        Map<String,double[]> newValueMap = new HashMap<>(valueMap);
+        Map<String,INDArray> newValueMap = new HashMap<>(valueMap);
         for(String label : unionLabels) newValueMap.remove(label);
-        return new FactorNode(psi,unionLabels,unionCardinalities,newValueMap);
+        return new FactorNode(Nd4j.create(psi),unionLabels,unionCardinalities,newValueMap);
     }
 
     public int nextSample() {
@@ -164,7 +167,7 @@ public class FactorNode extends Node {
         double curr = 0d;
         double r = rand.nextDouble();
         for(int i = 0; i < cardinalities[0]; i++) {
-            curr+=weights[i];
+            curr+=weights.getDouble(i);
             if(r <= curr) {
                 return i;
             }
@@ -174,6 +177,7 @@ public class FactorNode extends Node {
     }
 
     public void init() {
+        if(this.varLabels.length==0) throw new RuntimeException("No var labels");
         this.strides=computeStrides();
         this.cardinalityMap=new HashMap<>();
         this.strideMap=new HashMap<>();
@@ -186,29 +190,28 @@ public class FactorNode extends Node {
             numAssignments*=cardinalities[i];
         }
         if(this.values==null) {
-            this.values = new double[numAssignments];
+            this.values = Nd4j.create(numAssignments);
             for(int i = 0; i < numAssignments; i++) {
                 final int idx = i;
 
-                double val = 1d;
+                double val = 0d;
                 for(String label : varLabels) {
                     int y = indexToAssignment(label,idx);
-                    double[] values = valueMap.get(label);
+                    INDArray values = valueMap.get(label);
                     if(values!=null) {
-                        val*=valueMap.get(label)[y];
+                        val+=values.getDouble(y);
                     }
                 }
-                values[idx]=val;
-
+                values.putScalar(idx,val);
             }
 
         }
-        if(weights!=null && numAssignments!=weights.length) throw new RuntimeException("Invalid factor dimensions");
-        if(values!=null && numAssignments!=values.length) throw new RuntimeException("Invalid value dimensions");
+        if(weights!=null && numAssignments!=weights.length()) throw new RuntimeException("Invalid factor dimensions");
+        if(values!=null && numAssignments!=values.length()) throw new RuntimeException("Invalid value dimensions");
     }
 
     public void reNormalize(NormalizationFunction f) {
-        weights=f.getFunction().apply(weights);
+        f.normalize(weights);
     }
 
     public int strideFor(String varLabel) {
@@ -279,6 +282,6 @@ public class FactorNode extends Node {
     @Override
     public String toString() {
         return "Scope: "+Arrays.toString(varLabels)+"\n"+
-                "Factor: "+Arrays.toString(weights);
+                "Factor: "+weights;
     }
 }

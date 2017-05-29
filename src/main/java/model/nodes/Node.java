@@ -3,6 +3,8 @@ package model.nodes;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 import util.MathHelper;
 
 import java.io.Serializable;
@@ -28,14 +30,14 @@ public class Node implements Serializable {
     @Getter
     protected int cardinality;
     @Getter
-    protected final Map<String,double[]> valueMap;
+    protected final Map<String,INDArray> valueMap;
     @Getter
-    protected double[] values;
+    protected INDArray values;
     // Null means not assigned
 
-    public Node(String label, int cardinality, double[] values) {
+    public Node(String label, int cardinality, INDArray values) {
         this.label=label==null?"UNLABELED-"+idCounter.getAndIncrement():label;
-        if(values!=null && cardinality!=values.length) throw new RuntimeException("Illegal cardinality and values combination");
+        if(values!=null && cardinality!=values.length()) throw new RuntimeException("Illegal cardinality and values combination");
         this.neighbors=new ArrayList<>();
         this.cardinality=cardinality;
         this.factors=new ArrayList<>();

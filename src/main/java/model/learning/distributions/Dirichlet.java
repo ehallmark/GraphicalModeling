@@ -4,10 +4,17 @@ import lombok.Getter;
 import lombok.Setter;
 import model.functions.normalization.DivideByPartition;
 import model.nodes.FactorNode;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.NDArrayIndex;
+import org.nd4j.linalg.inverse.InvertMatrix;
+import org.nd4j.linalg.ops.transforms.Transforms;
 import util.MathHelper;
 
 
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,21 +22,27 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by ehallmark on 4/28/17.
  */
 public class Dirichlet implements Distribution {
-    private static final double EPSILON = 0.000001;
+    private static final double EPSILON = 0.00001;
     protected double alpha;
     protected FactorNode factor;
     protected AtomicInteger seenSoFar;
-    protected double[] accumulatedValues;
-    protected double[] expectationsInData;
-    protected double[] expectationsInTheta;
-    protected double[] weightsCopy;
-    protected double[] previousWeightsCopy;
+    protected INDArray accumulatedValues;
+    protected INDArray weightsCopy;
+    protected INDArray previousWeightsCopy;
     protected boolean converged;
+    // for L-BFGS
+    protected LinkedList<INDArray> S;
+    protected LinkedList<INDArray> Y;
+    protected INDArray Gk;
+    protected INDArray GkMinusOne;
+    protected INDArray H0k;
+    protected LinkedList<INDArray> P;
     @Getter
     protected double score;
     @Getter @Setter
     protected double learningRate = 0.01d;
     protected boolean useGradientDescent;
+    protected int historyLength = 10;
     public Dirichlet(FactorNode factor, double alpha, boolean useGradientDescent) {
         this.alpha=alpha;
         this.factor=factor;
@@ -38,10 +51,13 @@ public class Dirichlet implements Distribution {
         this.seenSoFar=new AtomicInteger(0);
         this.score=Double.MAX_VALUE;
         if(useGradientDescent) {
-            this.accumulatedValues=new double[factor.getNumAssignments()];
-            this.expectationsInData=new double[factor.getNumAssignments()];
-            this.expectationsInTheta=new double[factor.getNumAssignments()];
-            Arrays.fill(this.accumulatedValues,0d);
+            this.accumulatedValues= Nd4j.zeros(factor.getNumAssignments());
+            this.S = new LinkedList<>();
+            this.Y = new LinkedList<>();
+            this.P = new LinkedList<>();
+            this.Gk = null;
+            this.GkMinusOne = null;
+            this.H0k = Nd4j.eye(factor.getNumAssignments());
         }
     }
 
@@ -52,6 +68,9 @@ public class Dirichlet implements Distribution {
 
     @Override
     public void train(Map<String,Integer> assignmentMap) {
+        // Set Previous Weights
+        if(factor.getWeights()!=null)previousWeightsCopy = factor.getWeights().dup();
+
         int[] assignment = new int[factor.getNumVariables()];
         factor.getVarToIndexMap().forEach((var,idx)->{
             Integer varAssignment = assignmentMap.get(var);
@@ -61,19 +80,10 @@ public class Dirichlet implements Distribution {
 
         int idx = factor.assignmentToIndex(assignment);
 
-        weightsCopy[idx]++;
+        weightsCopy.get(NDArrayIndex.point(idx)).addi(1d);
         if(useGradientDescent) {
-            accumulatedValues[idx]+=factor.getValues()[idx];
-        } else {
-            if (previousWeightsCopy != null && seenSoFar.get()>1) {
-                converged=true;
-                score = MathHelper.computeDistance(weightsCopy,previousWeightsCopy);
-                score=Math.abs(score);
-                updateConvergedStatus();
-            }
-            previousWeightsCopy = Arrays.copyOf(weightsCopy, weightsCopy.length);
+            accumulatedValues.get(NDArrayIndex.point(idx)).addi(factor.getValues().getDouble(idx));
         }
-
         // increment final counter
         seenSoFar.getAndIncrement();
     }
@@ -81,37 +91,64 @@ public class Dirichlet implements Distribution {
     @Override
     public void updateFactorWeights() {
         if(factor.getWeights()==null || !useGradientDescent) {
-            factor.setWeights(Arrays.copyOf(weightsCopy, weightsCopy.length));
-            factor.reNormalize(new DivideByPartition());
+            factor.setWeights(weightsCopy.dup());
         }
 
         if(useGradientDescent && seenSoFar.get()>0) {
-            converged = true;
-            score=0d;
-            double[] values = factor.getValues();
-            final int M = seenSoFar.get();
-            double[] weights = factor.getWeights();
-            for (int i = 0; i < factor.getNumAssignments(); i++) {
-                double expectData = accumulatedValues[i] / M;
-                double expectTheta = (weightsCopy[i] * values[i]) / M;
-                double deriv = expectData - expectTheta;
-                score+=deriv;
-                weights[i] = weights[i] + learningRate * deriv;
+            // Calculate L-BFGS
+            {
+                INDArray values = factor.getValues();
+                final int M = seenSoFar.get();
+
+                // Calculate derivative
+                GkMinusOne = Gk;
+                Gk = weightsCopy.mul(values).subi(accumulatedValues).divi(M);
+
+                // Update Weights
+                factor.getWeights().addi(Gk.mul(learningRate));
             }
-            score/=factor.getNumAssignments();
+
+            // Update Data
+            {
+                // update S
+                if (previousWeightsCopy != null) {
+                    S.add(factor.getWeights().sub(previousWeightsCopy));
+                }
+                // update Y
+                if (GkMinusOne != null) {
+                    Y.add(Gk.sub(GkMinusOne));
+                }
+
+                // update P
+                if (Y.size() > 0 && S.size() > 0 ) {
+                    P.add(Y.getLast().transpose().mmul(S.getLast()));
+                    try {
+                        InvertMatrix.invert(P.getLast(), true);
+                    } catch(Exception e) {
+                        System.out.println("Warning matrix is singular");
+                        converged=true;
+                        return;
+                    }
+                }
+            }
+        }
+        factor.reNormalize(new DivideByPartition());
+
+        // Check for convergence
+        if (previousWeightsCopy != null) {
+            score = Transforms.euclideanDistance(factor.getWeights(),previousWeightsCopy);
             score=Math.abs(score);
             updateConvergedStatus();
         }
+
     }
 
     private void updateConvergedStatus() {
-        if (score > EPSILON) converged = false;
+        converged = (score < EPSILON);
     }
 
     @Override
     public void initialize() {
-        double[] newWeights = new double[factor.getNumAssignments()];
-        Arrays.fill(newWeights,alpha);
-        weightsCopy=newWeights;
+        weightsCopy=Nd4j.zeros(factor.getNumAssignments()).addi(alpha);
     }
 }

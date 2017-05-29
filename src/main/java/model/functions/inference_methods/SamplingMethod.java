@@ -5,6 +5,7 @@ import model.graphs.GibbsChain;
 import model.graphs.Graph;
 import model.graphs.MetropolisHastingsChain;
 import model.nodes.FactorNode;
+import org.nd4j.linalg.api.ndarray.INDArray;
 import util.MathHelper;
 
 import java.util.HashMap;
@@ -52,7 +53,7 @@ public class SamplingMethod implements InferenceMethod {
             Map<String, FactorNode> expectations = chain.next();
             expectations.forEach((label, factor) -> {
                 // Find Expectation
-                double[] weights = factor.getWeights();
+                INDArray weights = factor.getWeights();
                 int maxIdx = MathHelper.indexOfMaxValue(weights);
                 if (maxIdx < 0 || maxIdx > factor.getCardinality())
                     throw new RuntimeException("Invalid assignment: " + maxIdx);
