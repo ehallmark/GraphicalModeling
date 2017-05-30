@@ -102,7 +102,7 @@ public class Dirichlet implements Distribution {
 
                 // Calculate derivative
                 GkMinusOne = Gk;
-                Gk = weightsCopy.mul(values).subi(accumulatedValues).divi(M);
+                Gk = accumulatedValues.div(M).subi(factor.getWeights().mul(values));
 
                 // Update Weights
                 factor.getWeights().addi(Gk.mul(learningRate));
@@ -125,10 +125,11 @@ public class Dirichlet implements Distribution {
                     try {
                         InvertMatrix.invert(P.getLast(), true);
                     } catch(Exception e) {
-                        System.out.println("Warning matrix is singular");
-                        converged=true;
-                        return;
+                       // System.out.println("Invalid Hessian!!!!!!");
+                        //converged = true;
+                        //return;
                     }
+                    //System.out.println("Valid HESSIAN!");
                 }
             }
         }
@@ -144,7 +145,7 @@ public class Dirichlet implements Distribution {
     }
 
     private void updateConvergedStatus() {
-        converged = (score < EPSILON);
+        if(!converged)converged = (score < EPSILON);
     }
 
     @Override
