@@ -142,9 +142,7 @@ public class FactorNode extends Node {
         int j = 0;
         int k = 0;
         int[] assignments = new int[unionSize];
-        for(int l = 0; l < unionSize; l++) {
-            assignments[l]=0;
-        }
+        Arrays.fill(assignments,0);
 
         double[] myWeights = weights.data().asDouble();
         double[] otherWeights = other.weights.data().asDouble();
@@ -166,7 +164,6 @@ public class FactorNode extends Node {
             }
         }
         Map<String,INDArray> newValueMap = new HashMap<>(valueMap);
-        for(String label : unionLabels) newValueMap.remove(label);
         return new FactorNode(Nd4j.create(psi),unionLabels,unionCardinalities,newValueMap);
     }
 
@@ -198,7 +195,7 @@ public class FactorNode extends Node {
             numAssignments*=cardinalities[i];
         }
         if(this.values==null) {
-            this.values = Nd4j.create(numAssignments);
+            double[] shallowValues = new double[numAssignments];
             for(int i = 0; i < numAssignments; i++) {
                 final int idx = i;
 
@@ -210,9 +207,9 @@ public class FactorNode extends Node {
                         val+=values.getDouble(y);
                     }
                 }
-                values.putScalar(idx,val);
+                shallowValues[idx]=val;
             }
-
+            this.values=Nd4j.create(shallowValues);
         }
         if(weights!=null && numAssignments!=weights.length()) throw new RuntimeException("Invalid factor dimensions");
         if(values!=null && numAssignments!=values.length()) throw new RuntimeException("Invalid value dimensions");
