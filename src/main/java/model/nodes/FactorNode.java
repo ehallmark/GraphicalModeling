@@ -171,8 +171,9 @@ public class FactorNode extends Node {
         if(numVariables>1||cardinalities.length<1)  throw new RuntimeException("Can only be a single factor scope");
         double curr = 0d;
         double r = rand.nextDouble();
+        double[] weightsShallow = weights.data().asDouble();
         for(int i = 0; i < cardinalities[0]; i++) {
-            curr+=weights.getDouble(i);
+            curr+=weightsShallow[i];
             if(r <= curr) {
                 return i;
             }
@@ -196,16 +197,19 @@ public class FactorNode extends Node {
         }
         if(this.values==null) {
             double[] shallowValues = new double[numAssignments];
+            double[][] shallowValuesPerVar = new double[numVariables][];
+            for(int i = 0; i < numVariables; i++) {
+                String varLabel = varLabels[i];
+                shallowValuesPerVar[i]=valueMap.get(varLabel).data().asDouble();
+            }
             for(int i = 0; i < numAssignments; i++) {
                 final int idx = i;
 
                 double val = 0d;
-                for(String label : varLabels) {
+                for(int j = 0; j < numVariables; j++) {
+                    String label = varLabels[j];
                     int y = indexToAssignment(label,idx);
-                    INDArray values = valueMap.get(label);
-                    if(values!=null) {
-                        val+=values.getDouble(y);
-                    }
+                    val+=shallowValuesPerVar[j][y];
                 }
                 shallowValues[idx]=val;
             }
