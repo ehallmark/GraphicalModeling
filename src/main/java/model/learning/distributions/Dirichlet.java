@@ -108,8 +108,8 @@ public class Dirichlet implements Distribution {
                 factor.getWeights().addi(Gk.mul(learningRate));
             }
 
-            // Update Data
-            {
+            // Update Data (for L-BFGS)
+            /*{
                 // update S
                 if (previousWeightsCopy != null) {
                     S.add(factor.getWeights().sub(previousWeightsCopy));
@@ -125,13 +125,13 @@ public class Dirichlet implements Distribution {
                     try {
                         InvertMatrix.invert(P.getLast(), true);
                     } catch(Exception e) {
-                       // System.out.println("Invalid Hessian!!!!!!");
-                        //converged = true;
-                        //return;
+                        System.out.println("Invalid Hessian!!!!!!");
+                        converged = true;
+                        return;
                     }
-                    //System.out.println("Valid HESSIAN!");
+                    System.out.println("Valid HESSIAN!");
                 }
-            }
+            }*/
         }
         factor.reNormalize(new DivideByPartition());
 

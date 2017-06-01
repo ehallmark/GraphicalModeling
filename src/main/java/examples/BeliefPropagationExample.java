@@ -81,13 +81,13 @@ public class BeliefPropagationExample {
         // Moralize to a Markov Network
         MarkovNet markovNet = bayesianNet.moralize();
         markovNet.setTrainingData(assignments);
-        markovNet.applyLearningAlgorithm(new MarkovLearningAlgorithm(markovNet,10, new SamplingMethod(100, SamplingMethod.Type.MetropolisHastings)),1000);
+        markovNet.applyLearningAlgorithm(new MarkovLearningAlgorithm(markovNet,10, new BeliefPropagation()),1000);
         // Triangulate with given heuristic
         markovNet.triangulateInPlace(new MinimalCliqueSizeHeuristic());
 
         // Also try on Bayesian net just for fun
         bayesianNet.setTrainingData(assignments);
-        bayesianNet.applyLearningAlgorithm(new ExpectationMaximizationAlgorithm(bayesianNet,10, new SamplingMethod(100, SamplingMethod.Type.MetropolisHastings)),1000);
+        bayesianNet.applyLearningAlgorithm(new ExpectationMaximizationAlgorithm(bayesianNet,10, new BeliefPropagation()),1000);
         MarkovNet markovNet2 = bayesianNet.moralize();
 
         // Create Clique Tree From Triangulated Graph

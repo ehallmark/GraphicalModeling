@@ -5,10 +5,12 @@ import lombok.Setter;
 import model.functions.normalization.NormalizationFunction;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 import util.DoubleDoublePair;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -53,10 +55,8 @@ public class FactorNode extends Node {
                 Zset.add(z);
             }
         });
-        List<String> Ys = new ArrayList<>(numVariables);
-        for(String x : varLabels) {
-            if(!Zset.contains(x)) Ys.add(x);
-        }
+        List<String> Ys = new ArrayList<>(Arrays.asList(varLabels));
+        Zset.forEach(z->Ys.remove(z));
 
         int num = Ys.size();
         int[] newCardinalities = new int[num];
@@ -64,18 +64,27 @@ public class FactorNode extends Node {
         for(int i = 0; i < num; i++) {
             newCardinalities[i] = cardinalityMap.get(Ys.get(i));
         }
-        int numAssignmentsTotal = numAssignmentCombinations(newCardinalities);
-        int[] newStrides = computeStrides(newCardinalities,newLabels.length);
-        double[] psi = new double[numAssignmentsTotal];
-        List<String> Zs = new ArrayList<>(Zset);
-        Set<Integer> indicesToSumOver = new HashSet<>();
-        for(int i = 0; i < Zs.size(); i++) {
-            String z = Zs.get(i);
+        // keep indices sorted
+        SortedSet<Integer> indicesToSumOver = new TreeSet<>();
+        for(String z : Zset) {
             indicesToSumOver.add(varToIndexMap.get(z));
         }
         Map<String,INDArray> newValuesMap = new HashMap<>(valueMap);
-        Zs.forEach(z->newValuesMap.remove(z));
-        this.assignmentPermutationsStream().parallel().forEach(permutation->{
+        Zset.forEach(z->newValuesMap.remove(z));
+        // reshape
+        INDArray newWeights = weights.dup().reshape(cardinalities);
+        int cnt = 0;
+        for(int idx : indicesToSumOver) {
+            newWeights = Nd4j.rollAxis(newWeights,idx-cnt,0).sum(0);
+            cnt++;
+        }
+
+        // reshape
+        newWeights=newWeights.reshape(1,newWeights.length());
+
+        return new FactorNode(newWeights,newLabels,newCardinalities,newValuesMap);
+
+        /*this.assignmentPermutationsStream().parallel().forEach(permutation->{
             int[] assignmentsToKeep = new int[newCardinalities.length];
             int j = 0;
             for(int i = 0; i < cardinalities.length; i++) {
@@ -89,7 +98,7 @@ public class FactorNode extends Node {
             double w = weights.getDouble(oldIdx);
             psi[newIdx] = psi[newIdx] + w;
         });
-        return new FactorNode(Nd4j.create(psi),newLabels,newCardinalities,newValuesMap);
+        return new FactorNode(Nd4j.create(psi),newLabels,newCardinalities,newValuesMap);*/
     }
 
     // returns all possible assignments with given cardinality array
