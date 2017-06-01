@@ -164,6 +164,7 @@ public class FactorNode extends Node {
             }
         }
         Map<String,INDArray> newValueMap = new HashMap<>(valueMap);
+        newValueMap.putAll(other.valueMap);
         return new FactorNode(Nd4j.create(psi),unionLabels,unionCardinalities,newValueMap);
     }
 
@@ -200,6 +201,9 @@ public class FactorNode extends Node {
             double[][] shallowValuesPerVar = new double[numVariables][];
             for(int i = 0; i < numVariables; i++) {
                 String varLabel = varLabels[i];
+                if(!valueMap.containsKey(varLabel)) {
+                    System.out.println("Oops");
+                }
                 shallowValuesPerVar[i]=valueMap.get(varLabel).data().asDouble();
             }
             for(int i = 0; i < numAssignments; i++) {

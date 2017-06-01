@@ -67,9 +67,9 @@ public class BeliefPropagationExample {
             if(i%10!=0) {
                 for(Node node : bayesianNet.getAllNodesList()) {
                     // randomly don't include some
-                    if(rand.nextBoolean()||rand.nextBoolean()) {
+                    //if(rand.nextBoolean()||rand.nextBoolean()) {
                         assignment.put(node.getLabel(),rand.nextInt(node.getCardinality()));
-                    }
+                    //}
                 }
             } else {
                 if(assignment.size()>0)assignments.add(assignment);
