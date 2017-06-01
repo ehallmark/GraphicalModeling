@@ -21,6 +21,7 @@ import java.util.stream.Stream;
  * Created by Evan on 4/13/2017.
  */
 public abstract class Graph implements Serializable {
+    private static final long serialVersionUID = 68l;
     @Getter @Setter
     protected List<Distribution> distributions;
     protected Map<String, Node> labelToNodeMap;

@@ -86,9 +86,8 @@ public class FactorNode extends Node {
             }
             int oldIdx = assignmentToIndex(permutation);
             int newIdx = assignmentToIndex(assignmentsToKeep,newStrides,newLabels.length);
-            synchronized (psi) {
-                psi[newIdx] = psi[newIdx] + weights.getDouble(oldIdx);
-            }
+            double w = weights.getDouble(oldIdx);
+            psi[newIdx] = psi[newIdx] + w;
         });
         return new FactorNode(Nd4j.create(psi),newLabels,newCardinalities,newValuesMap);
     }
