@@ -22,11 +22,11 @@ public class FactorNode extends Node {
     @Getter
     protected int[] strides;
     @Getter
+    protected INDArray stridesVec;
+    @Getter
     protected int[] cardinalities;
     @Getter
     protected int numVariables;
-    protected Map<String,Integer> cardinalityMap;
-    protected Map<String,Integer> strideMap;
     @Getter
     protected String[] varLabels;
     @Getter @Setter
@@ -62,8 +62,17 @@ public class FactorNode extends Node {
         int[] newCardinalities = new int[num];
         String[] newLabels = Ys.toArray(new String[num]);
         for(int i = 0; i < num; i++) {
-            newCardinalities[i] = cardinalityMap.get(Ys.get(i));
+            String Yi = Ys.get(i);
+            int idx = varToIndexMap.get(Yi);
+            newCardinalities[i] = cardinalities[idx];
         }
+        int newNumAssignments = numAssignmentCombinations(newCardinalities);
+        int[] newStridesPrim = computeStrides(newCardinalities);
+        INDArray newStrides = Nd4j.create(newStridesPrim.length);
+        for(int i = 0; i < newStridesPrim.length; i++) {
+            newStrides.putScalar(i,newStridesPrim[i]);
+        }
+
         // keep indices sorted
         SortedSet<Integer> indicesToSumOver = new TreeSet<>();
         for(String z : Zset) {
@@ -71,46 +80,37 @@ public class FactorNode extends Node {
         }
         Map<String,INDArray> newValuesMap = new HashMap<>(valueMap);
         Zset.forEach(z->newValuesMap.remove(z));
-        // reshape
-        INDArray newWeights = weights.dup().reshape(cardinalities);
-        int cnt = 0;
-        for(int idx : indicesToSumOver) {
-            newWeights = Nd4j.rollAxis(newWeights,idx-cnt,0).sum(0);
-            cnt++;
-        }
 
-        // reshape
-        newWeights=newWeights.reshape(1,newWeights.length());
+        double[] weightsCopy = weights.data().asDouble();
+        double[] psi = new double[newNumAssignments];
 
-        return new FactorNode(newWeights,newLabels,newCardinalities,newValuesMap);
-
-        /*this.assignmentPermutationsStream().parallel().forEach(permutation->{
-            int[] assignmentsToKeep = new int[newCardinalities.length];
+        this.assignmentPermutationsStream().parallel().forEach(permutation->{
+            double[] assignmentsToKeep = new double[newCardinalities.length];
+            double[] permutationPrim = permutation.data().asDouble();
             int j = 0;
             for(int i = 0; i < cardinalities.length; i++) {
                 if(!indicesToSumOver.contains(i)) {
-                    assignmentsToKeep[j] = permutation[i];
+                    assignmentsToKeep[j] = permutationPrim[i];
                     j++;
                 }
             }
             int oldIdx = assignmentToIndex(permutation);
-            int newIdx = assignmentToIndex(assignmentsToKeep,newStrides,newLabels.length);
-            double w = weights.getDouble(oldIdx);
+            int newIdx = assignmentToIndex(Nd4j.create(assignmentsToKeep),newStrides);
+            double w = weightsCopy[oldIdx];
             psi[newIdx] = psi[newIdx] + w;
         });
-        return new FactorNode(Nd4j.create(psi),newLabels,newCardinalities,newValuesMap);*/
+        return new FactorNode(Nd4j.create(psi),newLabels,newCardinalities,newValuesMap);
     }
 
     // returns all possible assignments with given cardinality array
-    public Stream<int[]> assignmentPermutationsStream() {
-        int numAssignments=numAssignmentCombinations(cardinalities);
+    public Stream<INDArray> assignmentPermutationsStream() {
         List<Integer> indices = new ArrayList<>(numAssignments); for(int i = 0; i < numAssignments; i++) indices.add(i);
-        return indices.parallelStream().map(idx->{
-            int[] assignment = new int[cardinalities.length];
+        return indices.stream().map(idx->{
+            double[] assignment = new double[cardinalities.length];
             for(int i = 0; i < cardinalities.length; i++) {
                 assignment[i]=indexToAssignment(varLabels[i],idx);
             }
-            return assignment;
+            return Nd4j.create(assignment);
         });
     }
 
@@ -128,13 +128,24 @@ public class FactorNode extends Node {
         String[] unionLabels = labelUnion(other);
         int unionSize = unionLabels.length;
         int[] unionCardinalities = new int[unionSize];
+        int[] myUnionStrides = new int[unionSize];
+        int[] otherUnionStrides = new int[unionSize];
         for(int i = 0; i < unionSize; i++) {
             String label = unionLabels[i];
-            if(cardinalityMap.containsKey(label)) {
-                unionCardinalities[i] = cardinalityMap.get(label);
-            } else {
-                // the other one better have it!
-                unionCardinalities[i] = other.cardinalityMap.get(label);
+            Integer myIdx = varToIndexMap.get(label);
+            Integer otherIdx = other.varToIndexMap.get(label);
+            if(myIdx!=null && otherIdx!=null) {
+                myUnionStrides[i] = strides[myIdx];
+                unionCardinalities[i] = cardinalities[otherIdx];
+                otherUnionStrides[i] = other.strides[otherIdx];
+            } else if(myIdx==null) {
+                myUnionStrides[i] = 0;
+                unionCardinalities[i] = other.cardinalities[otherIdx];
+                otherUnionStrides[i] = other.strides[otherIdx];
+            } else if(otherIdx==null) {
+                myUnionStrides[i] = strides[myIdx];
+                unionCardinalities[i] = cardinalities[myIdx];
+                otherUnionStrides[i] = 0;
             }
         }
 
@@ -150,23 +161,26 @@ public class FactorNode extends Node {
         double[] otherWeights = other.weights.data().asDouble();
         int numAssignmentsTotal = numAssignmentCombinations(unionCardinalities);
         double[] psi = new double[numAssignmentsTotal];
+
         for( int i = 0; i < numAssignmentsTotal; i++) {
             psi[i] = f.apply(new DoubleDoublePair(myWeights[j],otherWeights[k]));
             for(int l = 0; l < unionSize; l++) {
                 assignments[l]++;
+                int myStride = myUnionStrides[l];
+                int otherStride = otherUnionStrides[l];
                 if(assignments[l]==unionCardinalities[l]) {
                     assignments[l]=0;
-                    j -= (unionCardinalities[l] - 1)*strideFor(unionLabels[l]);
-                    k -= (unionCardinalities[l] - 1)*other.strideFor(unionLabels[l]);
+                    j -= (unionCardinalities[l] - 1)*myStride;
+                    k -= (unionCardinalities[l] - 1)*otherStride;
                 } else {
-                    j += strideFor(unionLabels[l]);
-                    k += other.strideFor(unionLabels[l]);
+                    j += myStride;
+                    k += otherStride;
                     break;
                 }
             }
         }
         Map<String,INDArray> newValueMap = new HashMap<>(valueMap);
-        for(String label : unionLabels) newValueMap.remove(label);
+        newValueMap.putAll(other.valueMap);
         return new FactorNode(Nd4j.create(psi),unionLabels,unionCardinalities,newValueMap);
     }
 
@@ -187,15 +201,13 @@ public class FactorNode extends Node {
     public void init() {
         if(this.varLabels.length==0) throw new RuntimeException("No var labels");
         this.strides=computeStrides();
-        this.cardinalityMap=new HashMap<>();
-        this.strideMap=new HashMap<>();
+        this.stridesVec=Nd4j.create(numVariables);
         this.varToIndexMap=new HashMap<>();
         this.numAssignments=1;
         for(int i = 0; i < numVariables; i++) {
-            cardinalityMap.put(varLabels[i],cardinalities[i]);
-            strideMap.put(varLabels[i],strides[i]);
             varToIndexMap.put(varLabels[i],i);
             numAssignments*=cardinalities[i];
+            stridesVec.putScalar(i,strides[i]);
         }
         if(this.values==null) {
             this.values = Nd4j.create(numAssignments);
@@ -222,12 +234,6 @@ public class FactorNode extends Node {
         f.normalize(weights);
     }
 
-    public int strideFor(String varLabel) {
-        Integer stride = strideMap.get(varLabel);
-        if(stride==null)return 0;
-        else return stride;
-    }
-
 
     // where each cardinality number represents a distint variable
     public static int numAssignmentCombinations(int[] cardinalities) {
@@ -247,34 +253,38 @@ public class FactorNode extends Node {
         return varUnion.toArray(unionArray);
     }
 
-    public int assignmentToIndex(int[] assignments) {
-        return assignmentToIndex(assignments,strides,numVariables);
+    public int assignmentToIndex(INDArray assignments) {
+        return assignmentToIndex(assignments,stridesVec);
     }
 
-    public static int assignmentToIndex(int[] assignments, int[] strides, int numVariables) {
-        if(assignments.length!=strides.length) throw new RuntimeException("Invalid number of assignments. Should have size: "+strides.length);
-        int index = 0;
-        for(int i = 0; i < numVariables; i++) {
+    public static int assignmentToIndex(INDArray assignments, INDArray strides) {
+        if(assignments.length()!=strides.length()) throw new RuntimeException("Invalid number of assignments. Should have size: "+strides.length());
+        INDArray scalar = assignments.mmul(strides.transpose());
+        if(scalar.isScalar()) return scalar.getInt(0);
+        else throw new RuntimeException("Not scalar but should be");
+        /*int index = 0;
+        for(int i = 0; i < assignments.length; i++) {
             index+= (assignments[i]*strides[i]);
         }
-        return index;
+        return index;*/
     }
 
-    public int indexToAssignment(String varName, int index) {
-        Integer stride = strideMap.get(varName);
-        Integer cardinality = cardinalityMap.get(varName);
-        if(stride==null||cardinality==null) throw new RuntimeException("Variable "+varName+" not found.");
-        return (index/stride) % cardinality;
+    public int indexToAssignment(String varName, int assignmentIdx) {
+        Integer varIdx = varToIndexMap.get(varName);
+        if(varIdx == null) throw new RuntimeException("Variable "+varName+" not found.");
+        int stride = strides[varIdx];
+        int cardinality = cardinalities[varIdx];
+        return (assignmentIdx/stride) % cardinality;
     }
 
     public int[] computeStrides() {
-        return computeStrides(cardinalities,numVariables);
+        return computeStrides(cardinalities);
     }
 
-    public static int[] computeStrides(int[] cardinalities, int numVariables) {
-        int strides[] = new int[numVariables];
+    public static int[] computeStrides(int[] cardinalities) {
+        int strides[] = new int[cardinalities.length];
         int stride = 1;
-        for(int i = 0; i < numVariables; i++) {
+        for(int i = 0; i < cardinalities.length; i++) {
             int cardinality = cardinalities[i];
             if(cardinality>0) {
                 strides[i] = stride;

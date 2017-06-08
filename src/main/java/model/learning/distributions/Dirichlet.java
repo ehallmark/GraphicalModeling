@@ -52,12 +52,13 @@ public class Dirichlet implements Distribution {
         this.score=Double.MAX_VALUE;
         if(useGradientDescent) {
             this.accumulatedValues= Nd4j.zeros(factor.getNumAssignments());
-            this.S = new LinkedList<>();
+            /*this.S = new LinkedList<>();
             this.Y = new LinkedList<>();
             this.P = new LinkedList<>();
+            this.H0k = Nd4j.eye(factor.getNumAssignments());
+            */
             this.Gk = null;
             this.GkMinusOne = null;
-            this.H0k = Nd4j.eye(factor.getNumAssignments());
         }
     }
 
@@ -71,14 +72,14 @@ public class Dirichlet implements Distribution {
         // Set Previous Weights
         if(factor.getWeights()!=null)previousWeightsCopy = factor.getWeights().dup();
 
-        int[] assignment = new int[factor.getNumVariables()];
+        double[] assignment = new double[factor.getNumVariables()];
         factor.getVarToIndexMap().forEach((var,idx)->{
             Integer varAssignment = assignmentMap.get(var);
             if(varAssignment==null) throw new RuntimeException("Null assignment");
             assignment[idx]=varAssignment;
         });
 
-        int idx = factor.assignmentToIndex(assignment);
+        int idx = factor.assignmentToIndex(Nd4j.create(assignment));
 
         weightsCopy.get(NDArrayIndex.point(idx)).addi(1d);
         if(useGradientDescent) {

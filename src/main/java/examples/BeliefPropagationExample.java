@@ -63,13 +63,13 @@ public class BeliefPropagationExample {
         Random rand = new Random(69);
         List<Map<String,Integer>> assignments = new ArrayList<>();
         Map<String,Integer> assignment = new HashMap<>();
-        for(int i = 0; i < 1000; i++) {
+        for(int i = 0; i < 10000; i++) {
             if(i%10!=0) {
                 for(Node node : bayesianNet.getAllNodesList()) {
                     // randomly don't include some
-                    if(rand.nextBoolean()&&rand.nextBoolean()) {
+                    //if(rand.nextBoolean()||rand.nextBoolean()) {
                         assignment.put(node.getLabel(),rand.nextInt(node.getCardinality()));
-                    }
+                    //}
                 }
             } else {
                 if(assignment.size()>0)assignments.add(assignment);
@@ -81,13 +81,13 @@ public class BeliefPropagationExample {
         // Moralize to a Markov Network
         MarkovNet markovNet = bayesianNet.moralize();
         markovNet.setTrainingData(assignments);
-        markovNet.applyLearningAlgorithm(new MarkovLearningAlgorithm(markovNet,10, new BeliefPropagation()),1000);
+        markovNet.applyLearningAlgorithm(new MarkovLearningAlgorithm(markovNet,10, new BeliefPropagation()),100);
         // Triangulate with given heuristic
         markovNet.triangulateInPlace(new MinimalCliqueSizeHeuristic());
 
         // Also try on Bayesian net just for fun
         bayesianNet.setTrainingData(assignments);
-        bayesianNet.applyLearningAlgorithm(new ExpectationMaximizationAlgorithm(bayesianNet,10, new BeliefPropagation()),1000);
+        bayesianNet.applyLearningAlgorithm(new ExpectationMaximizationAlgorithm(bayesianNet,10, new BeliefPropagation()),100);
         MarkovNet markovNet2 = bayesianNet.moralize();
 
         // Create Clique Tree From Triangulated Graph
@@ -117,7 +117,7 @@ public class BeliefPropagationExample {
         // Gibbs Chain
         System.out.println("Gibbs Chain: ");
         Iterator<Map<String,FactorNode>> chain = new GibbsChain(bayesianNet,test);
-        int chainLength = 10000;
+        int chainLength = 1000;
         for(int i = 0; i < chainLength; i++) {
             Map<String,FactorNode> p = chain.next();
             if(i==chainLength-1)p.forEach((label,f)->System.out.println("Prob "+label+": "+f.getWeights()));
