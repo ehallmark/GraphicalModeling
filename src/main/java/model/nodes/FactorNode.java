@@ -136,7 +136,7 @@ public class FactorNode extends Node {
             Integer otherIdx = other.varToIndexMap.get(label);
             if(myIdx!=null && otherIdx!=null) {
                 myUnionStrides[i] = strides[myIdx];
-                unionCardinalities[i] = cardinalities[otherIdx];
+                unionCardinalities[i] = cardinalities[myIdx];
                 otherUnionStrides[i] = other.strides[otherIdx];
             } else if(myIdx==null) {
                 myUnionStrides[i] = 0;
