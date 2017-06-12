@@ -63,7 +63,7 @@ public class BeliefPropagationExample {
         Random rand = new Random(69);
         List<Map<String,Integer>> assignments = new ArrayList<>();
         Map<String,Integer> assignment = new HashMap<>();
-        for(int i = 0; i < 10000; i++) {
+        for(int i = 0; i < 1000; i++) {
             if(i%10!=0) {
                 for(Node node : bayesianNet.getAllNodesList()) {
                     // randomly don't include some

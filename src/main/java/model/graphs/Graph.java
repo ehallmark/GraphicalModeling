@@ -178,7 +178,7 @@ public abstract class Graph implements Serializable {
         }
         if(newFac==null) throw new RuntimeException("Nothing happened");
         // sum out
-        newFac=newFac.sumOut(new String[]{x.getLabel()});
+        newFac=newFac.sumOut(new String[]{x.getLabel()},null);
         newList.add(newFac);
         return newList;
     }

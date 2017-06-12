@@ -72,14 +72,14 @@ public class Dirichlet implements Distribution {
         // Set Previous Weights
         if(factor.getWeights()!=null)previousWeightsCopy = factor.getWeights().dup();
 
-        double[] assignment = new double[factor.getNumVariables()];
+        int[] assignment = new int[factor.getNumVariables()];
         factor.getVarToIndexMap().forEach((var,idx)->{
             Integer varAssignment = assignmentMap.get(var);
             if(varAssignment==null) throw new RuntimeException("Null assignment");
             assignment[idx]=varAssignment;
         });
 
-        int idx = factor.assignmentToIndex(Nd4j.create(assignment));
+        int idx = factor.assignmentToIndex(assignment);
 
         weightsCopy.get(NDArrayIndex.point(idx)).addi(1d);
         if(useGradientDescent) {

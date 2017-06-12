@@ -1,6 +1,7 @@
 package model.nodes;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import model.functions.normalization.NormalizationFunction;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -21,8 +22,6 @@ public class FactorNode extends Node {
     private static final Random rand = new Random(69);
     @Getter
     protected int[] strides;
-    @Getter
-    protected INDArray stridesVec;
     @Getter
     protected int[] cardinalities;
     @Getter
@@ -47,7 +46,9 @@ public class FactorNode extends Node {
         this.init();
     }
 
-    public FactorNode sumOut(String[] toSumOver) {
+
+    // If an array is already available
+    public FactorNode sumOut(@NonNull String[] toSumOver, INDArray allocatedArray) {
         Collection<String> Zset = new HashSet<>();
         Arrays.stream(toSumOver).forEach(z->{
             Integer idx = varToIndexMap.get(z);
@@ -68,10 +69,6 @@ public class FactorNode extends Node {
         }
         int newNumAssignments = numAssignmentCombinations(newCardinalities);
         int[] newStridesPrim = computeStrides(newCardinalities);
-        INDArray newStrides = Nd4j.create(newStridesPrim.length);
-        for(int i = 0; i < newStridesPrim.length; i++) {
-            newStrides.putScalar(i,newStridesPrim[i]);
-        }
 
         // keep indices sorted
         SortedSet<Integer> indicesToSumOver = new TreeSet<>();
@@ -82,35 +79,34 @@ public class FactorNode extends Node {
         Zset.forEach(z->newValuesMap.remove(z));
 
         double[] weightsCopy = weights.data().asDouble();
-        double[] psi = new double[newNumAssignments];
+        INDArray finalAllocatedArray = allocatedArray==null ? Nd4j.zeros(newNumAssignments) : allocatedArray.assign(0);
 
         this.assignmentPermutationsStream().parallel().forEach(permutation->{
-            double[] assignmentsToKeep = new double[newCardinalities.length];
-            double[] permutationPrim = permutation.data().asDouble();
+            int[] assignmentsToKeep = new int[newCardinalities.length];
             int j = 0;
             for(int i = 0; i < cardinalities.length; i++) {
                 if(!indicesToSumOver.contains(i)) {
-                    assignmentsToKeep[j] = permutationPrim[i];
+                    assignmentsToKeep[j] = permutation[i];
                     j++;
                 }
             }
             int oldIdx = assignmentToIndex(permutation);
-            int newIdx = assignmentToIndex(Nd4j.create(assignmentsToKeep),newStrides);
+            int newIdx = assignmentToIndex(assignmentsToKeep,newStridesPrim);
             double w = weightsCopy[oldIdx];
-            psi[newIdx] = psi[newIdx] + w;
+            finalAllocatedArray.get(NDArrayIndex.point(newIdx)).addi(w);
         });
-        return new FactorNode(Nd4j.create(psi),newLabels,newCardinalities,newValuesMap);
+        return new FactorNode(finalAllocatedArray,newLabels,newCardinalities,newValuesMap);
     }
 
     // returns all possible assignments with given cardinality array
-    public Stream<INDArray> assignmentPermutationsStream() {
+    public Stream<int[]> assignmentPermutationsStream() {
         List<Integer> indices = new ArrayList<>(numAssignments); for(int i = 0; i < numAssignments; i++) indices.add(i);
         return indices.stream().map(idx->{
-            double[] assignment = new double[cardinalities.length];
+            int[] assignment = new int[cardinalities.length];
             for(int i = 0; i < cardinalities.length; i++) {
                 assignment[i]=indexToAssignment(varLabels[i],idx);
             }
-            return Nd4j.create(assignment);
+            return assignment;
         });
     }
 
@@ -200,13 +196,11 @@ public class FactorNode extends Node {
     public void init() {
         if(this.varLabels.length==0) throw new RuntimeException("No var labels");
         this.strides=computeStrides();
-        this.stridesVec=Nd4j.create(numVariables);
         this.varToIndexMap=new HashMap<>();
         this.numAssignments=1;
         for(int i = 0; i < numVariables; i++) {
             varToIndexMap.put(varLabels[i],i);
             numAssignments*=cardinalities[i];
-            stridesVec.putScalar(i,strides[i]);
         }
         if(this.values==null) {
             double[] shallowValues = new double[numAssignments];
@@ -258,8 +252,8 @@ public class FactorNode extends Node {
         return varUnion.toArray(unionArray);
     }
 
-    public int assignmentToIndex(INDArray assignments) {
-        return assignmentToIndex(assignments,stridesVec);
+    public int assignmentToIndex(int[] assignments) {
+        return assignmentToIndex(assignments,strides);
     }
 
     public static int assignmentToIndex(INDArray assignments, INDArray strides) {
@@ -272,6 +266,15 @@ public class FactorNode extends Node {
             index+= (assignments[i]*strides[i]);
         }
         return index;*/
+    }
+
+    public static int assignmentToIndex(int[] assignments, int[] strides) {
+        if(assignments.length!=strides.length) throw new RuntimeException("Invalid number of assignments. Should have size: "+strides.length);
+        int index = 0;
+        for(int i = 0; i < assignments.length; i++) {
+            index+= (assignments[i]*strides[i]);
+        }
+        return index;
     }
 
     public int indexToAssignment(String varName, int assignmentIdx) {

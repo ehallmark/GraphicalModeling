@@ -62,7 +62,7 @@ public class MetropolisHastingsChain implements Iterator<Map<String,FactorNode>>
                 if (result.getNumVariables() > 1) {
                     Set<String> toSumOut = new HashSet<>(Arrays.asList(result.getVarLabels()));
                     toSumOut.remove(node.getLabel());
-                    result = result.sumOut(toSumOut.toArray(new String[toSumOut.size()]));
+                    result = result.sumOut(toSumOut.toArray(new String[toSumOut.size()]),null);
                 }
                 result.reNormalize(new DivideByPartition());
 
