@@ -19,7 +19,6 @@ public abstract class AbstractLearningAlgorithm implements LearningAlgorithm {
     protected List<Distribution> distributions;
     protected Graph graph;
     protected boolean converged;
-    protected int batchSize = 10;
     protected AbstractLearningAlgorithm(DistributionCreator creator, Graph graph) {
         this.creator=creator;
         this.distributions=new ArrayList<>();
@@ -33,14 +32,11 @@ public abstract class AbstractLearningAlgorithm implements LearningAlgorithm {
 
     @Override
     public boolean runAlgorithm() {
+        // set factors and normalize
         graph.getTrainingData().forEach(assignment->{
             Map<String, Integer> cleanAssignment = handleAssignment(assignment, graph);
-            AtomicInteger cnt = new AtomicInteger(0);
             distributions.forEach(distribution -> {
                 distribution.train(cleanAssignment);
-                if(cnt.getAndIncrement()%batchSize==0) {
-                    distribution.updateFactorWeights();
-                }
             });
         });
         // set factors and normalize

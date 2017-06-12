@@ -8,19 +8,13 @@ import model.nodes.FactorNode;
  */
 public class DirichletCreator extends DistributionCreator {
     protected double alpha;
-    protected final boolean useGradientDescent;
-    public DirichletCreator(double alpha, boolean useGradientDescent) {
-        this.alpha=alpha;
-        this.useGradientDescent=useGradientDescent;
-    }
-
     public DirichletCreator(double alpha) {
-        this(alpha,false);
+        this.alpha=alpha;
     }
 
     @Override
     public Distribution create(FactorNode factor) {
-        Dirichlet dirichlet = new Dirichlet(factor,alpha,useGradientDescent);
+        Dirichlet dirichlet = new Dirichlet(factor,alpha);
         dirichlet.initialize();
         return dirichlet;
     }

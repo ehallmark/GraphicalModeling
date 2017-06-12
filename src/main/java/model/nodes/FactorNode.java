@@ -30,13 +30,12 @@ public class FactorNode extends Node {
     @Getter
     protected int numAssignments;
 
-    public FactorNode(double[] weights, String[] varLabels, int[] cardinalities, Map<String,double[]> valueMap) {
-        super(null,varLabels.length,null);
+    public FactorNode(double[] weights, String[] varLabels, int[] cardinalities) {
+        super(null,varLabels.length);
         if(varLabels.length!=cardinalities.length) throw new RuntimeException("varLabels and Cardinalities must have same size");
         this.varLabels=varLabels;
         this.cardinalities=cardinalities;
         this.weights=weights;
-        this.valueMap.putAll(valueMap);
         this.numVariables=cardinalities.length;
         this.init();
     }
@@ -66,11 +65,9 @@ public class FactorNode extends Node {
         int[] newStridesPrim = computeStrides(newCardinalities);
 
         // keep indices sorted
-        Map<String,double[]> newValuesMap = new HashMap<>(valueMap);
         SortedSet<Integer> indicesToSumOver = new TreeSet<>();
         for(String z : Zset) {
             indicesToSumOver.add(varToIndexMap.get(z));
-            newValuesMap.remove(z);
         }
 
         double[] psi = new double[newNumAssignments];
@@ -90,7 +87,7 @@ public class FactorNode extends Node {
             double w = weights[oldIdx];
             psi[newIdx]+=w;
         });
-        return new FactorNode(psi,newLabels,newCardinalities,newValuesMap);
+        return new FactorNode(psi,newLabels,newCardinalities);
     }
 
     // returns all possible assignments with given cardinality array
@@ -167,9 +164,7 @@ public class FactorNode extends Node {
                 }
             }
         }
-        Map<String,double[]> newValueMap = new HashMap<>(valueMap);
-        newValueMap.putAll(other.valueMap);
-        return new FactorNode(psi,unionLabels,unionCardinalities,newValueMap);
+        return new FactorNode(psi,unionLabels,unionCardinalities);
     }
 
     public int nextSample() {
@@ -178,12 +173,15 @@ public class FactorNode extends Node {
         double r = rand.nextDouble();
         for(int i = 0; i < cardinalities[0]; i++) {
             curr+=weights[i];
+            if(Double.isNaN(curr)) {
+                // pick unif random
+                return rand.nextInt(cardinalities[0]);
+            }
             if(r <= curr) {
                 return i;
             }
         }
-        System.out.println("WARNING: Factor does not appear normalized");
-        return cardinalities[0]-1;
+        throw new RuntimeException("WARNING: Factor does not appear normalized");
     }
 
     public void init() {
@@ -195,27 +193,7 @@ public class FactorNode extends Node {
             varToIndexMap.put(varLabels[i],i);
             numAssignments*=cardinalities[i];
         }
-        if(this.values==null) {
-            this.values=new double[numAssignments];
-            double[][] valuesPerVar = new double[numVariables][];
-            for(int i = 0; i < numVariables; i++) {
-                String varLabel = varLabels[i];
-                valuesPerVar[i]=valueMap.get(varLabel);
-            }
-            for(int i = 0; i < numAssignments; i++) {
-                final int idx = i;
-
-                double val = 1d;
-                for(int j = 0; j < numVariables; j++) {
-                    String label = varLabels[j];
-                    int y = indexToAssignment(label,idx);
-                    val*=valuesPerVar[j][y];
-                }
-                values[idx]=val;
-            }
-        }
         if(weights!=null && numAssignments!=weights.length) throw new RuntimeException("Invalid factor dimensions");
-        if(values!=null && numAssignments!=values.length) throw new RuntimeException("Invalid value dimensions");
     }
 
     public void reNormalize(NormalizationFunction f) {

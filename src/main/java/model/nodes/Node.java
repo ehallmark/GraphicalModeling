@@ -25,25 +25,14 @@ public class Node implements Serializable {
     protected final String label;
     @Getter
     protected int cardinality;
-    @Getter
-    protected final Map<String,double[]> valueMap;
-    @Getter
-    protected double[] values;
-    // Null means not assigned
 
-    public Node(String label, int cardinality, double[] values) {
+    public Node(String label, int cardinality) {
         this.label=label==null?"UNLABELED-"+idCounter.getAndIncrement():label;
-        if(values!=null && cardinality!=values.length) throw new RuntimeException("Illegal cardinality and values combination");
         this.neighbors=new ArrayList<>();
         this.cardinality=cardinality;
         this.factors=new ArrayList<>();
         this.outBound = new ArrayList<>();
         this.inBound = new ArrayList<>();
-        this.values=values;
-        this.valueMap=new HashMap<>();
-        if(!(values==null)) {
-            this.valueMap.put(label,values);
-        }
     }
 
     public void removeNeighborConnections() {

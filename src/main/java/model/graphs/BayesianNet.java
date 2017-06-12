@@ -35,7 +35,7 @@ public class BayesianNet extends Graph {
         MarkovNet newNet = new MarkovNet();
         Set<UndirectedEdge> edges = new HashSet<>(); // just for keeping track
         allNodesList.forEach(node->{
-            newNet.addNode(node.getLabel(),node.getCardinality(),node.getValues());
+            newNet.addNode(node.getLabel(),node.getCardinality());
         });
         allNodesList.forEach(node->{
             List<Node> parents = node.getInBound();

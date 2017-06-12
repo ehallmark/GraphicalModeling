@@ -7,7 +7,6 @@ import model.nodes.FactorNode;
 import util.MathHelper;
 
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -19,43 +18,21 @@ public class Dirichlet implements Distribution {
     protected double alpha;
     protected FactorNode factor;
     protected AtomicInteger seenSoFar;
-    protected double[] accumulatedValues;
     protected double[] weightsCopy;
     protected double[] previousWeights;
     protected boolean converged;
-    // for L-BFGS
-    protected LinkedList<double[]> S;
-    protected LinkedList<double[]> Y;
-    protected double[] Gk;
-    protected double[] GkMinusOne;
-    protected double[] H0k;
-    protected LinkedList<double[]> P;
     @Getter
     protected double score;
     @Getter @Setter
     protected double learningRate = 0.01d;
-    protected boolean useGradientDescent;
-    protected int historyLength = 10;
 
-    public Dirichlet(FactorNode factor, double alpha, boolean useGradientDescent) {
+    public Dirichlet(FactorNode factor, double alpha) {
         this.alpha=alpha;
         this.factor=factor;
         this.converged=false;
-        this.useGradientDescent=useGradientDescent;
         this.seenSoFar=new AtomicInteger(0);
         this.score=Double.MAX_VALUE;
-        if(useGradientDescent) {
-            this.accumulatedValues= new double[factor.getNumAssignments()];
-            /*this.S = new LinkedList<>();
-            this.Y = new LinkedList<>();
-            this.P = new LinkedList<>();
-            this.H0k = Nd4j.eye(factor.getNumAssignments());
-            */
-            this.Gk = null;
-            this.GkMinusOne = null;
-        }
     }
-
 
     public boolean getConverged() {
         return converged;
@@ -73,9 +50,7 @@ public class Dirichlet implements Distribution {
         int idx = factor.assignmentToIndex(assignment);
 
         weightsCopy[idx]++;
-        if(useGradientDescent) {
-            accumulatedValues[idx]+=factor.getValues()[idx];
-        }
+
         // increment final counter
         seenSoFar.getAndIncrement();
     }
@@ -84,9 +59,8 @@ public class Dirichlet implements Distribution {
     public void updateFactorWeights() {
         previousWeights=factor.getWeights();
 
-        factor.setWeights(weightsCopy);
+        factor.setWeights(Arrays.copyOf(weightsCopy,weightsCopy.length));
         factor.reNormalize(new DivideByPartition());
-
 
         // Check for convergence
         if (previousWeights != null) {

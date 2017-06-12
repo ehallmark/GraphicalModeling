@@ -43,16 +43,16 @@ public abstract class Graph implements Serializable {
     public abstract CliqueTree createCliqueTree();
 
     public Node addBinaryNode(String label) { // default binary
-        return this.addNode(label,2,new double[]{0d,1d});
+        return this.addNode(label,2);
     }
 
     public Node findNode(String label) {
         return labelToNodeMap.get(label);
     }
 
-    public Node addNode(String label, int cardinality, double[] values) {
+    public Node addNode(String label, int cardinality) {
         if(labelToNodeMap.containsKey(label)) return labelToNodeMap.get(label);
-        Node node = new Node(label,cardinality, values);
+        Node node = new Node(label,cardinality);
         allNodesList.add(node);
         labelToNodeMap.put(label, node);
         return node;
@@ -67,16 +67,14 @@ public abstract class Graph implements Serializable {
     public FactorNode addFactorNode(double[] weights, Node... connectingNodes) {
         String[] connectingLabels = new String[connectingNodes.length];
         int[] varCardinalities = new int[connectingNodes.length];
-        Map<String,double[]> valueMap = new HashMap<>();
         for(int i = 0; i < connectingNodes.length; i++) {
             Node node = connectingNodes[i];
             String label = node.getLabel();
             if(label==null) throw new RuntimeException("Unable to find node");
-            valueMap.put(label,node.getValues());
             connectingLabels[i] = label;
             varCardinalities[i] = node.getCardinality();
         }
-        FactorNode factor = new FactorNode(weights,connectingLabels,varCardinalities,valueMap);
+        FactorNode factor = new FactorNode(weights,connectingLabels,varCardinalities);
         for(int i = 0; i < connectingNodes.length; i++) {
             Node node = connectingNodes[i];
             node.addFactor(factor);
@@ -154,7 +152,7 @@ public abstract class Graph implements Serializable {
         double[] weights = new double[node.getCardinality()];
         Arrays.fill(weights,0d);
         weights[val] = 1d;
-        return new FactorNode(weights,new String[]{node.getLabel()},new int[]{node.getCardinality()},node.getValueMap());
+        return new FactorNode(weights,new String[]{node.getLabel()},new int[]{node.getCardinality()});
     }
 
     protected List<FactorNode> sumProductVariableElimination(List<FactorNode> F, Node x) {

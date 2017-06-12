@@ -26,7 +26,7 @@ public class CliqueTree extends BayesianNet {
     }
 
     @Override
-    public Node addNode(String node, int cardinality, double[] values) {
+    public Node addNode(String node, int cardinality) {
         throw new UnsupportedOperationException("Must use addNode(CliqueNode) signature");
     }
 
