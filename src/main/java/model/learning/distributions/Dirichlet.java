@@ -4,17 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 import model.functions.normalization.DivideByPartition;
 import model.nodes.FactorNode;
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.indexing.NDArrayIndex;
-import org.nd4j.linalg.inverse.InvertMatrix;
-import org.nd4j.linalg.ops.transforms.Transforms;
 import util.MathHelper;
-
 
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,23 +19,24 @@ public class Dirichlet implements Distribution {
     protected double alpha;
     protected FactorNode factor;
     protected AtomicInteger seenSoFar;
-    protected INDArray accumulatedValues;
-    protected INDArray weightsCopy;
-    protected INDArray previousWeightsCopy;
+    protected double[] accumulatedValues;
+    protected double[] weightsCopy;
+    protected double[] previousWeights;
     protected boolean converged;
     // for L-BFGS
-    protected LinkedList<INDArray> S;
-    protected LinkedList<INDArray> Y;
-    protected INDArray Gk;
-    protected INDArray GkMinusOne;
-    protected INDArray H0k;
-    protected LinkedList<INDArray> P;
+    protected LinkedList<double[]> S;
+    protected LinkedList<double[]> Y;
+    protected double[] Gk;
+    protected double[] GkMinusOne;
+    protected double[] H0k;
+    protected LinkedList<double[]> P;
     @Getter
     protected double score;
     @Getter @Setter
     protected double learningRate = 0.01d;
     protected boolean useGradientDescent;
     protected int historyLength = 10;
+
     public Dirichlet(FactorNode factor, double alpha, boolean useGradientDescent) {
         this.alpha=alpha;
         this.factor=factor;
@@ -51,7 +45,7 @@ public class Dirichlet implements Distribution {
         this.seenSoFar=new AtomicInteger(0);
         this.score=Double.MAX_VALUE;
         if(useGradientDescent) {
-            this.accumulatedValues= Nd4j.zeros(factor.getNumAssignments());
+            this.accumulatedValues= new double[factor.getNumAssignments()];
             /*this.S = new LinkedList<>();
             this.Y = new LinkedList<>();
             this.P = new LinkedList<>();
@@ -69,9 +63,6 @@ public class Dirichlet implements Distribution {
 
     @Override
     public void train(Map<String,Integer> assignmentMap) {
-        // Set Previous Weights
-        if(factor.getWeights()!=null)previousWeightsCopy = factor.getWeights().dup();
-
         int[] assignment = new int[factor.getNumVariables()];
         factor.getVarToIndexMap().forEach((var,idx)->{
             Integer varAssignment = assignmentMap.get(var);
@@ -81,9 +72,9 @@ public class Dirichlet implements Distribution {
 
         int idx = factor.assignmentToIndex(assignment);
 
-        weightsCopy.get(NDArrayIndex.point(idx)).addi(1d);
+        weightsCopy[idx]++;
         if(useGradientDescent) {
-            accumulatedValues.get(NDArrayIndex.point(idx)).addi(factor.getValues().getDouble(idx));
+            accumulatedValues[idx]+=factor.getValues()[idx];
         }
         // increment final counter
         seenSoFar.getAndIncrement();
@@ -91,55 +82,16 @@ public class Dirichlet implements Distribution {
 
     @Override
     public void updateFactorWeights() {
-        if(factor.getWeights()==null || !useGradientDescent) {
-            factor.setWeights(weightsCopy.dup());
-        }
+        previousWeights=factor.getWeights();
 
-        if(useGradientDescent && seenSoFar.get()>0) {
-            // Calculate L-BFGS
-            {
-                INDArray values = factor.getValues();
-                final int M = seenSoFar.get();
-
-                // Calculate derivative
-                GkMinusOne = Gk;
-                Gk = accumulatedValues.div(M).subi(factor.getWeights().mul(values));
-
-                // Update Weights
-                factor.getWeights().addi(Gk.mul(learningRate));
-            }
-
-            // Update Data (for L-BFGS)
-            /*{
-                // update S
-                if (previousWeightsCopy != null) {
-                    S.add(factor.getWeights().sub(previousWeightsCopy));
-                }
-                // update Y
-                if (GkMinusOne != null) {
-                    Y.add(Gk.sub(GkMinusOne));
-                }
-
-                // update P
-                if (Y.size() > 0 && S.size() > 0 ) {
-                    P.add(Y.getLast().transpose().mmul(S.getLast()));
-                    try {
-                        InvertMatrix.invert(P.getLast(), true);
-                    } catch(Exception e) {
-                        System.out.println("Invalid Hessian!!!!!!");
-                        converged = true;
-                        return;
-                    }
-                    System.out.println("Valid HESSIAN!");
-                }
-            }*/
-        }
+        factor.setWeights(weightsCopy);
         factor.reNormalize(new DivideByPartition());
 
+
         // Check for convergence
-        if (previousWeightsCopy != null) {
-            score = Transforms.euclideanDistance(factor.getWeights(),previousWeightsCopy);
-            score=Math.abs(score);
+        if (previousWeights != null) {
+            score = MathHelper.euclideanDistance(factor.getWeights(),previousWeights);
+            score = Math.abs(score);
             updateConvergedStatus();
         }
 
@@ -151,6 +103,7 @@ public class Dirichlet implements Distribution {
 
     @Override
     public void initialize() {
-        weightsCopy=Nd4j.zeros(factor.getNumAssignments()).addi(alpha);
+        weightsCopy=new double[factor.getNumAssignments()];
+        Arrays.fill(weightsCopy,alpha);
     }
 }

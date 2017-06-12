@@ -1,11 +1,14 @@
 package model.functions.inference_methods;
 
 import model.graphs.CliqueTree;
+import model.graphs.GibbsChain;
 import model.graphs.Graph;
+import model.graphs.MetropolisHastingsChain;
 import model.nodes.FactorNode;
 import util.MathHelper;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -13,7 +16,16 @@ import java.util.stream.Collectors;
 /**
  * Created by Evan on 5/13/2017.
  */
-public class BeliefPropagation implements InferenceMethod {
+public class SamplingMethod implements InferenceMethod {
+    protected Type type;
+    protected int burnIn;
+    public enum Type { Gibbs, MetropolisHastings }
+
+    public SamplingMethod(int burnIn, Type type) {
+        this.type=type;
+        this.burnIn=burnIn;
+    }
+
     @Override
     public Map<String, Integer> nextAssignments(Graph graph, Map<String,Integer> currentAssignment) {
         Map<String,Integer> assignmentCopy = new HashMap<>(currentAssignment);
@@ -22,10 +34,22 @@ public class BeliefPropagation implements InferenceMethod {
         if(!nodeLabels.isEmpty()) {
             graph.getDistributions().forEach(distribution -> distribution.updateFactorWeights());
 
-            // Handles most cases
-            CliqueTree cliqueTree = graph.createCliqueTree();
-            cliqueTree.setCurrentAssignment(currentAssignment);
-            Map<String, FactorNode> expectations = cliqueTree.runBeliefPropagation(nodeLabels);
+            Iterator<Map<String,FactorNode>> chain;
+            switch(type) {
+                case Gibbs: {
+                    chain = new GibbsChain(graph,currentAssignment);
+                    break;
+                } case MetropolisHastings: {
+                    chain = new MetropolisHastingsChain(graph,currentAssignment);
+                    break;
+                }default: {
+                    throw new RuntimeException("Unknown sampling type");
+                }
+            }
+
+            for(int i = 0; i < burnIn && chain.hasNext(); i++) chain.next();
+
+            Map<String, FactorNode> expectations = chain.next();
             expectations.forEach((label, factor) -> {
                 // Find Expectation
                 double[] weights = factor.getWeights();

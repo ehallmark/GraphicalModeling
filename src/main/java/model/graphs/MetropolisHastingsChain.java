@@ -62,12 +62,12 @@ public class MetropolisHastingsChain implements Iterator<Map<String,FactorNode>>
                 if (result.getNumVariables() > 1) {
                     Set<String> toSumOut = new HashSet<>(Arrays.asList(result.getVarLabels()));
                     toSumOut.remove(node.getLabel());
-                    result = result.sumOut(toSumOut.toArray(new String[toSumOut.size()]),null);
+                    result = result.sumOut(toSumOut.toArray(new String[toSumOut.size()]));
                 }
                 result.reNormalize(new DivideByPartition());
 
-                double probProposal = result.getWeights().getDouble(nextAssignment);
-                double probCurrentState = result.getWeights().getDouble(currAssignment);
+                double probProposal = result.getWeights()[nextAssignment];
+                double probCurrentState = result.getWeights()[currAssignment];
 
                 if(probCurrentState==0||u<(probProposal/probCurrentState)) {
                     currentAssignments.put(node.getLabel(), nextAssignment);

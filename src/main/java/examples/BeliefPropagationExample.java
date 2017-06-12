@@ -1,14 +1,9 @@
 package examples;
 
 import model.functions.inference_methods.BeliefPropagation;
-import model.functions.inference_methods.SamplingMethod;
-import model.functions.normalization.DivideByPartition;
 import model.graphs.*;
 import model.functions.heuristic.MinimalCliqueSizeHeuristic;
-import model.learning.algorithms.BayesianLearningAlgorithm;
 import model.learning.algorithms.ExpectationMaximizationAlgorithm;
-import model.learning.algorithms.MarkovLearningAlgorithm;
-import model.learning.distributions.DirichletCreator;
 import model.nodes.FactorNode;
 import model.nodes.Node;
 
@@ -67,9 +62,9 @@ public class BeliefPropagationExample {
             if(i%10!=0) {
                 for(Node node : bayesianNet.getAllNodesList()) {
                     // randomly don't include some
-                    //if(rand.nextBoolean()||rand.nextBoolean()) {
+                    if(rand.nextBoolean()||rand.nextBoolean()) {
                         assignment.put(node.getLabel(),rand.nextInt(node.getCardinality()));
-                    //}
+                    }
                 }
             } else {
                 if(assignment.size()>0)assignments.add(assignment);
@@ -81,14 +76,15 @@ public class BeliefPropagationExample {
         // Moralize to a Markov Network
         MarkovNet markovNet = bayesianNet.moralize();
         markovNet.setTrainingData(assignments);
-        markovNet.applyLearningAlgorithm(new MarkovLearningAlgorithm(markovNet,10, new BeliefPropagation()),100);
         // Triangulate with given heuristic
         markovNet.triangulateInPlace(new MinimalCliqueSizeHeuristic());
+        markovNet.applyLearningAlgorithm(new ExpectationMaximizationAlgorithm(markovNet,10, new BeliefPropagation()),1000);
 
         // Also try on Bayesian net just for fun
         bayesianNet.setTrainingData(assignments);
         bayesianNet.applyLearningAlgorithm(new ExpectationMaximizationAlgorithm(bayesianNet,10, new BeliefPropagation()),100);
         MarkovNet markovNet2 = bayesianNet.moralize();
+        markovNet2.triangulateInPlace(new MinimalCliqueSizeHeuristic());
 
         // Create Clique Tree From Triangulated Graph
         CliqueTree cliqueTree = markovNet.createCliqueTree();
@@ -106,12 +102,12 @@ public class BeliefPropagationExample {
 
         System.out.println("Result 1: ");
         result.forEach((label,f)->{
-            System.out.println("Prob "+label+": "+f.getWeights());
+            System.out.println("Prob "+label+": "+f);
         });
 
         System.out.println("Result 2: ");
         result2.forEach((label,f)->{
-            System.out.println("Prob "+label+": "+f.getWeights());
+            System.out.println("Prob "+label+": "+f);
         });
 
         // Gibbs Chain
@@ -120,7 +116,7 @@ public class BeliefPropagationExample {
         int chainLength = 1000;
         for(int i = 0; i < chainLength; i++) {
             Map<String,FactorNode> p = chain.next();
-            if(i==chainLength-1)p.forEach((label,f)->System.out.println("Prob "+label+": "+f.getWeights()));
+            if(i==chainLength-1)p.forEach((label,f)->  System.out.println("Prob "+label+": "+f));
         }
 
         // MH chain
@@ -128,7 +124,7 @@ public class BeliefPropagationExample {
         chain = new MetropolisHastingsChain(bayesianNet,test);
         for(int i = 0; i < chainLength; i++) {
             Map<String,FactorNode> p = chain.next();
-            if(i==chainLength-1)p.forEach((label,f)->System.out.println("Prob "+label+": "+f.getWeights()));
+            if(i==chainLength-1)p.forEach((label,f)->  System.out.println("Prob "+label+": "+f));
         }
     }
 }

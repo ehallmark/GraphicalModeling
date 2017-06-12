@@ -8,14 +8,10 @@ import model.learning.algorithms.LearningAlgorithm;
 import model.learning.distributions.Distribution;
 import model.nodes.FactorNode;
 import model.nodes.Node;
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
-import util.Pair;
 
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 /**
  * Created by Evan on 4/13/2017.
@@ -54,16 +50,12 @@ public abstract class Graph implements Serializable {
         return labelToNodeMap.get(label);
     }
 
-    public Node addNode(String label, int cardinality, INDArray values) {
+    public Node addNode(String label, int cardinality, double[] values) {
         if(labelToNodeMap.containsKey(label)) return labelToNodeMap.get(label);
         Node node = new Node(label,cardinality, values);
         allNodesList.add(node);
         labelToNodeMap.put(label, node);
         return node;
-    }
-
-    public Node addNode(String label, int cardinality, double[] values) {
-        return this.addNode(label,cardinality,Nd4j.create(values));
     }
 
     public void reNormalize(NormalizationFunction function) {
@@ -72,10 +64,10 @@ public abstract class Graph implements Serializable {
         });
     }
 
-    public FactorNode addFactorNode(INDArray weights, Node... connectingNodes) {
+    public FactorNode addFactorNode(double[] weights, Node... connectingNodes) {
         String[] connectingLabels = new String[connectingNodes.length];
         int[] varCardinalities = new int[connectingNodes.length];
-        Map<String,INDArray> valueMap = new HashMap<>();
+        Map<String,double[]> valueMap = new HashMap<>();
         for(int i = 0; i < connectingNodes.length; i++) {
             Node node = connectingNodes[i];
             String label = node.getLabel();
@@ -159,8 +151,9 @@ public abstract class Graph implements Serializable {
     }
 
     public static FactorNode givenValueFactor(Node node, int val) {
-        INDArray weights = Nd4j.zeros(node.getCardinality());
-        weights.putScalar(val,1d);
+        double[] weights = new double[node.getCardinality()];
+        Arrays.fill(weights,0d);
+        weights[val] = 1d;
         return new FactorNode(weights,new String[]{node.getLabel()},new int[]{node.getCardinality()},node.getValueMap());
     }
 
@@ -178,7 +171,7 @@ public abstract class Graph implements Serializable {
         }
         if(newFac==null) throw new RuntimeException("Nothing happened");
         // sum out
-        newFac=newFac.sumOut(new String[]{x.getLabel()},null);
+        newFac=newFac.sumOut(new String[]{x.getLabel()});
         newList.add(newFac);
         return newList;
     }

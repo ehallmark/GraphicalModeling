@@ -96,7 +96,7 @@ public class CliqueNode extends Node {
             if(!otherNode.getNameSet().contains(label)) toSumOver.add(label);
         });
 
-        FactorNode result = newFactor.sumOut(toSumOver.toArray(new String[toSumOver.size()]),null);
+        FactorNode result = newFactor.sumOut(toSumOver.toArray(new String[toSumOver.size()]));
 
         result.reNormalize(new DivideByPartition());
         return result;

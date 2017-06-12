@@ -158,7 +158,7 @@ public class CliqueTree extends BayesianNet {
             FactorNode factor = cliques.stream().map(clique->clique.getCliqueFactor()).reduce((f1,f2)->f1.multiply(f2)).get();
             Set<String> labelsToSumOver = new HashSet<>(Arrays.asList(factor.getVarLabels()));
             labelsToSumOver.remove(nodeLabel);
-            FactorNode result = factor.sumOut(labelsToSumOver.toArray(new String[labelsToSumOver.size()]),null);
+            FactorNode result = factor.sumOut(labelsToSumOver.toArray(new String[labelsToSumOver.size()]));
             result.reNormalize(new DivideByPartition());
             toReturn.put(nodeLabel,result);
         });

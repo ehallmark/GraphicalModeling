@@ -24,11 +24,6 @@ public class ExpectationMaximizationAlgorithm extends BayesianLearningAlgorithm 
         this.inferenceMethod=inferenceMethod;
     }
 
-    protected ExpectationMaximizationAlgorithm(Graph graph, DistributionCreator creator, InferenceMethod inferenceMethod) {
-        super(graph,creator);
-        this.inferenceMethod=inferenceMethod;
-    }
-
     @Override
     protected Map<String,Integer> handleAssignment(Map<String,Integer> assignment, Graph graph) {
         return inferenceMethod.nextAssignments(graph,assignment);
